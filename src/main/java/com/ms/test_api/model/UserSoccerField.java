@@ -40,7 +40,7 @@ public class UserSoccerField implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + getRole().getName().toUpperCase()));
+        authorities.add(new SimpleGrantedAuthority(getRole().getName().toUpperCase()));
         return authorities;
     }
     

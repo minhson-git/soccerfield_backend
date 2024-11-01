@@ -36,7 +36,7 @@ public class AppConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry){
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000/**")
+                        .allowedOrigins("http://localhost:3000")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
                         .allowCredentials(true)
@@ -54,7 +54,9 @@ public class AppConfig {
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers("/auth/**").permitAll().anyRequest().authenticated())
+            .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers("/auth/**").permitAll()
+            .requestMatchers("/api/bookings/**").hasAuthority("ADMIN")                                                
+            .anyRequest().authenticated())
             .sessionManagement(manager->manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(provider()).addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
         

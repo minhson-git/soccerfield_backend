@@ -35,13 +35,13 @@ public class AuthenticationService {
 
         String accessToken = jwtService.generateToken(user);
 
-        String refreshToken = jwtService.generateRefreshToken(user);
+        // String refreshToken = jwtService.generateRefreshToken(user);
 
         return TokenResponse.builder()
                 .message("Login Successfully!")
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userCCCD(user.getCCCD())
+                .userID(user.getCCCD())
+                .role(user.getRole().getName())
                 .build();
     }
 

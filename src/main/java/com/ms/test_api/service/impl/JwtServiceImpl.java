@@ -13,6 +13,8 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.security.*;
 
 @Service
@@ -29,6 +31,12 @@ public class JwtServiceImpl implements JwtService {
     }
 
     private String generateToken(Map<String, Object> claims, UserDetails userDetails) {
+
+        String roles = userDetails.getAuthorities().stream()
+                        .map(authority -> authority.getAuthority()).collect(Collectors.joining(" "));
+
+        claims.put("scope", roles);
+
         return Jwts.builder()
                     .setClaims(claims)
                     .setSubject(userDetails.getUsername())
