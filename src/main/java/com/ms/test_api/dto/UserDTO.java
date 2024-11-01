@@ -1,7 +1,5 @@
 package com.ms.test_api.dto;
 
-import com.ms.test_api.model.Role;
-
 import lombok.Data;
 
 @Data
