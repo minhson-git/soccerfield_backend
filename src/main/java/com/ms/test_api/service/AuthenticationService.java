@@ -38,35 +38,35 @@ public class AuthenticationService {
         String refreshToken = jwtService.generateRefreshToken(user);
 
         return TokenResponse.builder()
+                .message("Login Successfully!")
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .userCCCD(user.getCCCD())
-                .fullName(user.getFullname())
                 .build();
     }
 
-    public TokenResponse refresh(HttpServletRequest request) {
-        String refreshToken = request.getHeader("x-token");
-        if(StringUtils.isBlank(refreshToken)){
-            throw new InvalidMetadataException("Token must be not blank");
-        }
+    // public TokenResponse refresh(HttpServletRequest request) {
+    //     String refreshToken = request.getHeader("x-token");
+    //     if(StringUtils.isBlank(refreshToken)){
+    //         throw new InvalidMetadataException("Token must be not blank");
+    //     }
 
-        final String userName = jwtService.extractUsername(refreshToken);
+    //     final String userName = jwtService.extractUsername(refreshToken);
 
-        Optional<UserSoccerField> user = userReponsitory.findByUsername(userName);
+    //     Optional<UserSoccerField> user = userReponsitory.findByUsername(userName);
 
-        if(!jwtService.isValid(refreshToken, user.get())){
-            throw new InvalidMetadataException("Token is invalid");
-        }
+    //     if(!jwtService.isValid(refreshToken, user.get())){
+    //         throw new InvalidMetadataException("Token is invalid");
+    //     }
 
-        String accessToken = jwtService.generateToken(user.get());
+    //     String accessToken = jwtService.generateToken(user.get());
 
 
-        return TokenResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userCCCD(user.get().getCCCD())
-                .fullName(user.get().getFullname())
-                .build();
-    }
+    //     return TokenResponse.builder()
+    //             .accessToken(accessToken)
+    //             .refreshToken(refreshToken)
+    //             .userCCCD(user.get().getCCCD())
+    //             .fullName(user.get().getFullname())
+    //             .build();
+    // }
 }

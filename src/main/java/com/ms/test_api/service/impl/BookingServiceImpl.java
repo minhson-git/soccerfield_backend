@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.ms.test_api.dto.BookingDTO;
+import com.ms.test_api.dto.FieldDTO;
+import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.exception.BookingNotFoundException;
 import com.ms.test_api.model.Booking;
 import com.ms.test_api.reponsitory.BookingRepository;
@@ -26,8 +28,8 @@ public class BookingServiceImpl implements BookingService{
         return bookings.stream()
             .map(b -> new BookingDTO(
                 b.getBookingId(),
-                b.getUser().getCCCD(),
-                b.getField().getFieldId(),
+                new UserDTO(b.getUser().getCCCD(), b.getUser().getFullname()),
+                new FieldDTO(b.getField().getFieldId(), b.getField().getFieldType()),
                 b.getStartTime(),
                 b.getEndTime(),
                 b.getBookingDate(),
@@ -45,8 +47,8 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking not exist with id: "+id));
         BookingDTO bookingDTO = new BookingDTO(
             booking.getBookingId(),
-            booking.getUser().getCCCD(),
-            booking.getField().getFieldId(),
+            new UserDTO(booking.getUser().getCCCD(), booking.getUser().getFullname()),
+            new FieldDTO(booking.getField().getFieldId(), booking.getField().getFieldType()),
             booking.getStartTime(),
             booking.getEndTime(),
             booking.getBookingDate(),

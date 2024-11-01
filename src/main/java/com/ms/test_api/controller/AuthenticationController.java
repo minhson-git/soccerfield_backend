@@ -24,15 +24,15 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
-    @PostMapping("/access")
+    @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody SignInRequest request) {
         return new ResponseEntity<>(authenticationService.authenticate(request), HttpStatus.OK);
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(HttpServletRequest request) {
-        return new ResponseEntity<>(authenticationService.refresh(request), HttpStatus.OK);
-    }
+    // @PostMapping("/refresh")
+    // public ResponseEntity<TokenResponse> refresh(HttpServletRequest request) {
+    //     return new ResponseEntity<>(authenticationService.refresh(request), HttpStatus.OK);
+    // }
 
 
 }

@@ -37,7 +37,7 @@ public class AppConfig {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry){
                 registry.addMapping("**")
-                        .allowedOrigins("http://localhost:8080")
+                        .allowedOrigins("http://localhost:8080", "http://localhost:3000")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
                         .allowCredentials(false)
@@ -69,13 +69,6 @@ public class AppConfig {
         provider.setPasswordEncoder(getPasswordEncoder());
 
         return provider;
-    }
-
-
-    public WebSecurityCustomizer webSecurityCustomizer(){
-        return webSecurity -> 
-            webSecurity.ignoring()
-                    .requestMatchers("");
     }
 
     @Bean

@@ -5,17 +5,18 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.model.UserSoccerField;
 
 public interface UserService {
 
     UserDetailsService userDetailsService();
 
-    List<UserSoccerField> getAllUsers();
+    List<UserDTO> getAllUsers();
 
     UserSoccerField registerUser(UserSoccerField user);
 
-    ResponseEntity<UserSoccerField> getUserByUsername(String username);
+    ResponseEntity<UserDTO> getUserByUsername(String username);
 
     ResponseEntity<UserSoccerField> updateUserByUsername(String username, UserSoccerField user);
 

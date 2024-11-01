@@ -3,6 +3,7 @@ package com.ms.test_api.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.model.UserSoccerField;
 import com.ms.test_api.service.impl.UserServiceImpl;
 
@@ -29,7 +30,7 @@ public class UserController {
     private final UserServiceImpl userServiceImpl;
 
     @GetMapping
-    public List<UserSoccerField> getAllUsers(){
+    public List<UserDTO> getAllUsers(){
         return userServiceImpl.getAllUsers();
     }
 
@@ -39,7 +40,7 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserSoccerField> getUserByUsername(@PathVariable String username){
+    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username){
         return userServiceImpl.getUserByUsername(username);
     }
 

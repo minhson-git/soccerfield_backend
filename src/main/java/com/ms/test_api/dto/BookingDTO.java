@@ -9,14 +9,14 @@ import java.time.LocalDateTime;
 public class BookingDTO {
 
     private Long bookingId;
-    private String cccd;
-    private int fieldID;
+    private UserDTO cccd;
+    private FieldDTO fieldID;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDate bookingDate;
     private String status;
     
-    public BookingDTO(Long bookingId, String cccd, int fieldID, LocalDateTime startTime, LocalDateTime endTime,
+    public BookingDTO(Long bookingId, UserDTO cccd, FieldDTO fieldID, LocalDateTime startTime, LocalDateTime endTime,
             LocalDate bookingDate, String status) {
         this.bookingId = bookingId;
         this.cccd = cccd;

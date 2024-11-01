@@ -1,6 +1,7 @@
 package com.ms.test_api.service.impl;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
@@ -10,6 +11,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.ms.test_api.dto.RoleDTO;
+import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.exception.UserNotFoundException;
 import com.ms.test_api.model.UserSoccerField;
 import com.ms.test_api.reponsitory.UserReponsitory;
@@ -29,8 +32,18 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<UserSoccerField> getAllUsers() {
-        return userReponsitory.findAll();
+    public List<UserDTO> getAllUsers() {
+        List<UserSoccerField> users = userReponsitory.findAll();
+        return users.stream()
+            .map(user -> new UserDTO(
+                user.getCCCD(), 
+                user.getUsername(), 
+                user.getPassword(), 
+                user.getEmail(), 
+                user.getFullname(), 
+                user.getPhone(), 
+                new RoleDTO(user.getRole().getId(), user.getRole().getName())
+                )).collect(Collectors.toList());
     }
 
     @Bean
@@ -45,9 +58,18 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public ResponseEntity<UserSoccerField> getUserByUsername(String username) {
+    public ResponseEntity<UserDTO> getUserByUsername(String username) {
         UserSoccerField user = userReponsitory.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User not exist with username: "+ username));
-        return ResponseEntity.ok(user);
+        UserDTO userDTOs = new UserDTO(
+            user.getCCCD(), 
+            user.getUsername(), 
+            user.getPassword(), 
+            user.getEmail(), 
+            user.getFullname(), 
+            user.getPhone(), 
+            new RoleDTO(user.getRole().getId(), user.getRole().getName()));
+        
+        return ResponseEntity.ok(userDTOs);
     }
 
     @Override

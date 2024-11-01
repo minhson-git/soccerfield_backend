@@ -8,8 +8,8 @@ import lombok.Getter;
 @Getter
 @Builder
 public class TokenResponse implements Serializable{
+    private String message;
     private String accessToken;
     private String refreshToken;
     private String userCCCD;
-    private String fullName;
 }
