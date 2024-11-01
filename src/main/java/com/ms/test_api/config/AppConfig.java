@@ -35,11 +35,11 @@ public class AppConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry){
-                registry.addMapping("**")
-                        .allowedOrigins("http://localhost:8080", "http://localhost:3000")
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:3000/**")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*")
-                        .allowCredentials(false)
+                        .allowCredentials(true)
                         .maxAge(3600);
             }
         };
