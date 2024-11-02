@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.exception.UserNotFoundException;
+import com.ms.test_api.model.Role;
 import com.ms.test_api.model.UserSoccerField;
+import com.ms.test_api.reponsitory.RoleRepository;
 import com.ms.test_api.reponsitory.UserReponsitory;
 import com.ms.test_api.service.UserService;
 
@@ -25,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService{
 
     private final UserReponsitory userReponsitory;
+
+    private final RoleRepository roleRepository;
 
     @Override
     public UserDetailsService userDetailsService() {
@@ -54,6 +58,8 @@ public class UserServiceImpl implements UserService{
     @Override
     public UserSoccerField registerUser(UserSoccerField user) {
         user.setPassword(setPasswordEncoder().encode(user.getPassword()));
+        Role role = roleRepository.findById(1).orElseThrow(()-> new ResourceNotFoundException("Role not found"));
+        user.setRole(role);
         return userReponsitory.save(user);
     }
 
@@ -80,7 +86,7 @@ public class UserServiceImpl implements UserService{
         user.setEmail(userDetail.getEmail());
         user.setFullname(userDetail.getFullname());
         user.setUsername(userDetail.getUsername());
-        user.setPassword(userDetail.getPassword());
+        user.setPassword(setPasswordEncoder().encode(userDetail.getPassword()));
         user.setPhone(userDetail.getPhone());
         user.setRole(userDetail.getRole());
 
