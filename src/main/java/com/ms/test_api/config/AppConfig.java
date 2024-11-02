@@ -2,6 +2,7 @@ package com.ms.test_api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -55,7 +56,9 @@ public class AppConfig {
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers("/auth/**").permitAll()
-            .requestMatchers("/api/bookings/**").hasAuthority("ADMIN")                                                
+            .requestMatchers("/api/bookings/**").hasAuthority("ADMIN")
+            .requestMatchers(HttpMethod.POST, "/api/bookings").hasAuthority("USER")
+            .requestMatchers(HttpMethod.GET, "/api/users/**").hasAuthority("ADMIN")                                            
             .anyRequest().authenticated())
             .sessionManagement(manager->manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(provider()).addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
