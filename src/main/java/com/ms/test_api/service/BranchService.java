@@ -5,18 +5,19 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.BranchDTO;
+import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.model.Branch;
 
 public interface BranchService {
 
-    ResponseEntity<List<BranchDTO>> getAllBranchs();
+    List<BranchDTO> getAllBranchs();
 
     Branch addBranch(Branch branch);
 
-    ResponseEntity<BranchDTO> getBranchById(int id);
+    ResponseEntity<ApiResponse<BranchDTO>> getBranchById(int id);
 
-    ResponseEntity<Branch> updateBranch(int id, Branch branch);
+    ResponseEntity<ApiResponse<BranchDTO>> updateBranch(int id, Branch branch);
 
-    ResponseEntity<?> deleteBranch(int id);
+    boolean deleteBranch(int id);
 
 }

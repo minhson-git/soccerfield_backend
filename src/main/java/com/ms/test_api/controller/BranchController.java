@@ -1,10 +1,13 @@
 package com.ms.test_api.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.BranchDTO;
+import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.model.Branch;
 import com.ms.test_api.service.impl.BranchServiceImpl;
 
@@ -29,28 +32,83 @@ public class BranchController {
     private final BranchServiceImpl branchServiceImpl;
 
     @GetMapping
-    public ResponseEntity<List<BranchDTO>> getAllBranch(){
-        return branchServiceImpl.getAllBranchs();
+    public ResponseEntity<ApiResponse<List<BranchDTO>>> getAllBranch(){
+        try {
+            List<BranchDTO> branchs = branchServiceImpl.getAllBranchs();
+            ApiResponse<List<BranchDTO>> response = new ApiResponse<>(
+                "Successfully retrieved branch data",
+                HttpStatus.OK.value(),
+                branchs
+            );
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (Exception e) {
+            // TODO: handle exception
+            ApiResponse<List<BranchDTO>> response = new ApiResponse<>(
+                "Failed to retrieve branch data",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping
-    public Branch createBranch(@RequestBody Branch branch) {
-        return branchServiceImpl.addBranch(branch);
+    public ResponseEntity<ApiResponse<Branch>> createBranch(@RequestBody Branch branchDetail) {
+        try {
+            Branch branch = branchServiceImpl.addBranch(branchDetail);
+            ApiResponse<Branch> response = new ApiResponse<Branch>(
+                "Branch created successfully", 
+                HttpStatus.CREATED.value(), 
+                branch
+            ); 
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse<Branch> response = new ApiResponse<>(
+                "Failed to create branch",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BranchDTO> getBranchById(@PathVariable int id){
+    public ResponseEntity<ApiResponse<BranchDTO>> getBranchById(@PathVariable int id){
         return branchServiceImpl.getBranchById(id);
     }   
     
      @PutMapping("/{id}")
-    public ResponseEntity<Branch> updateBranch(@PathVariable int id, @RequestBody Branch branchDetails) {
+    public ResponseEntity<ApiResponse<BranchDTO>> updateBranch(@PathVariable int id, @RequestBody Branch branchDetails) {
         return branchServiceImpl.updateBranch(id, branchDetails);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBranch(@PathVariable int id) {
-        return branchServiceImpl.deleteBranch(id);
+        try {
+            boolean isDeleted = branchServiceImpl.deleteBranch(id);
+            if (isDeleted) {
+                ApiResponse<String> response = new ApiResponse<>(
+                    "Branch deleted successfully",
+                    HttpStatus.OK.value(),
+                    null
+                );
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            } else {
+                ApiResponse<String> response = new ApiResponse<>(
+                    "Branch not found",
+                    HttpStatus.NOT_FOUND.value(),
+                    null
+                );
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<>(
+                "Failed to delete branch",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
     
 }
