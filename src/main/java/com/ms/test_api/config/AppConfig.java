@@ -55,7 +55,8 @@ public class AppConfig {
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers("/auth/**").permitAll()
-            .requestMatchers("/api/**").permitAll()                                          
+            .requestMatchers(HttpMethod.POST ,"/api/users").permitAll()
+            .requestMatchers("/api/**").hasAuthority("ADMIN")                                                                  
             .anyRequest().authenticated())
             .sessionManagement(manager->manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(provider()).addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);
