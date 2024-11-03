@@ -8,8 +8,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class TokenResponse implements Serializable{
-    private String message;
-    private String accessToken;
-    private String userID;
+    private boolean authenticated;
+    private String token;
     private String role;
 }

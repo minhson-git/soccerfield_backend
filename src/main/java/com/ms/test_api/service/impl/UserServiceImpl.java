@@ -33,6 +33,8 @@ public class UserServiceImpl implements UserService{
 
     private final RoleRepository roleRepository;
 
+    PasswordEncoder passwordEncoder;
+
     @Override
     public UserDetailsService userDetailsService() {
         return username -> userReponsitory.findByUsername(username).orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -45,17 +47,11 @@ public class UserServiceImpl implements UserService{
             .map(user -> new UserDTO(
                 user.getCCCD(), 
                 user.getUsername(), 
-                user.getPassword(), 
                 user.getEmail(), 
                 user.getFullname(), 
                 user.getPhone(), 
                 new RoleDTO(user.getRole().getId(), user.getRole().getName())
                 )).collect(Collectors.toList());
-    }
-
-    @Bean
-    public PasswordEncoder setPasswordEncoder(){
-        return new BCryptPasswordEncoder();
     }
 
     @Override
@@ -68,7 +64,7 @@ public class UserServiceImpl implements UserService{
             UserSoccerField newUser = new UserSoccerField();
             newUser.setCCCD(user.getCccd());
             newUser.setUsername(user.getUsername());
-            newUser.setPassword(setPasswordEncoder().encode(user.getPassword()));
+            newUser.setPassword(passwordEncoder.encode(user.getPassword()));
             newUser.setEmail(user.getEmail());
             newUser.setFullname(user.getFullname());
             newUser.setPhone(user.getPhone());
@@ -101,7 +97,6 @@ public class UserServiceImpl implements UserService{
         UserDTO userDTOs = new UserDTO(
             user.getCCCD(), 
             user.getUsername(), 
-            user.getPassword(), 
             user.getEmail(), 
             user.getFullname(), 
             user.getPhone(), 
@@ -118,7 +113,7 @@ public class UserServiceImpl implements UserService{
         user.setEmail(userDetail.getEmail());
         user.setFullname(userDetail.getFullname());
         user.setUsername(userDetail.getUsername());
-        user.setPassword(setPasswordEncoder().encode(userDetail.getPassword()));
+        user.setPassword(user.getPassword());
         user.setPhone(userDetail.getPhone());
         user.setRole(userDetail.getRole());
 

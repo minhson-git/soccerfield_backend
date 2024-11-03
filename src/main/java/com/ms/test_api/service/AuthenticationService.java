@@ -1,72 +1,107 @@
 package com.ms.test_api.service;
 
-import org.springframework.data.rest.webmvc.ResourceNotFoundException;
-import org.springframework.jmx.export.metadata.InvalidMetadataException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import com.ms.test_api.dto.request.IntrospectRequest;
 import com.ms.test_api.dto.request.SignInRequest;
+import com.ms.test_api.dto.response.IntrospectResponse;
 import com.ms.test_api.dto.response.TokenResponse;
 import com.ms.test_api.model.UserSoccerField;
 import com.ms.test_api.reponsitory.UserReponsitory;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.Payload;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
-import io.micrometer.common.util.StringUtils;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthenticationService {
 
     private final UserReponsitory userReponsitory;
 
-    private final AuthenticationManager authenticationManager;
+    @NonFinal
+    protected static final String SIGNER_KEY = "5q4o2IvLashcRxzV+SpTRVhbcgTdvyYfdijgpGC8tTOFa3agKANLtoM9D4mNOHeF";
 
-    private final JwtService jwtService;
+    public IntrospectResponse introspectResponse(IntrospectRequest request)
+            throws JOSEException, ParseException{
+        var token = request.getToken();
 
-    public TokenResponse authenticate(SignInRequest signInRequest) {
+        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(signInRequest.getUsername(), signInRequest.getPassword()));
+        SignedJWT signedJWT = SignedJWT.parse(token);
 
-        var user = userReponsitory.findByUsername(signInRequest.getUsername()).orElseThrow(() -> new ResourceNotFoundException("Username or password incorrect"));
+        Date expirtyTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
-        String accessToken = jwtService.generateToken(user);
+        var verifed = signedJWT.verify(verifier);
 
-        // String refreshToken = jwtService.generateRefreshToken(user);
+        return IntrospectResponse.builder()
+                .valid(verifed && expirtyTime.after(new Date()))
+                .build();
+            
+    }
+
+    public TokenResponse authenticate(SignInRequest request){
+        var user = userReponsitory.findByUsername(request.getUsername()).orElseThrow(()-> new RuntimeException("User not exist"));
+
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
+
+        if(!authenticated){
+            throw new RuntimeException("Username or password incorrect");
+        }
+
+        var token = generateToken(user);
 
         return TokenResponse.builder()
-                .message("Login Successfully!")
-                .accessToken(accessToken)
-                .userID(user.getCCCD())
+                .token(token)
+                .authenticated(authenticated)
                 .role(user.getRole().getName())
                 .build();
     }
+    
+    private String generateToken (UserSoccerField user){
 
-    // public TokenResponse refresh(HttpServletRequest request) {
-    //     String refreshToken = request.getHeader("x-token");
-    //     if(StringUtils.isBlank(refreshToken)){
-    //         throw new InvalidMetadataException("Token must be not blank");
-    //     }
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
-    //     final String userName = jwtService.extractUsername(refreshToken);
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+                    .subject(user.getUsername())
+                    .issuer("minhson.dev")
+                    .issueTime(new Date())
+                    .expirationTime(new Date(
+                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
+                    ))
+                    .claim("scope", user.getRole().getName().toUpperCase())
+                    .build();
+        
+        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
-    //     Optional<UserSoccerField> user = userReponsitory.findByUsername(userName);
+        JWSObject jwsObject = new JWSObject(header, payload);
 
-    //     if(!jwtService.isValid(refreshToken, user.get())){
-    //         throw new InvalidMetadataException("Token is invalid");
-    //     }
-
-    //     String accessToken = jwtService.generateToken(user.get());
-
-
-    //     return TokenResponse.builder()
-    //             .accessToken(accessToken)
-    //             .refreshToken(refreshToken)
-    //             .userCCCD(user.get().getCCCD())
-    //             .fullName(user.get().getFullname())
-    //             .build();
-    // }
+        try {
+            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
+            return jwsObject.serialize();
+        } catch (JOSEException e) {
+            log.error("Cannot create token", e);
+            throw new RuntimeException(e);
+        }
+    }
 }
