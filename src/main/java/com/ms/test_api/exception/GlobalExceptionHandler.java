@@ -1,21 +1,23 @@
 package com.ms.test_api.exception;
 
-import java.nio.file.AccessDeniedException;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.ms.test_api.dto.response.ApiResponse;
 
+import io.jsonwebtoken.security.SignatureException;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException (AccessDeniedException ex){
+    @ExceptionHandler(value = AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException ex){
         ApiResponse<Object> response = new ApiResponse<Object>(
-            "Access Denied", 
+            "You do not have permission", 
             HttpStatus.FORBIDDEN.value(),
             null 
         );
@@ -32,4 +34,34 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException ex){
+        ApiResponse<Object> response = new ApiResponse<Object>(
+            ex.getMessage(), 
+            HttpStatus.BAD_REQUEST.value(), 
+            null
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>> handleValidation(MethodArgumentNotValidException ex){
+        ApiResponse<Object> response = new ApiResponse<Object>(
+            ex.getFieldError().getDefaultMessage(), 
+            HttpStatus.BAD_REQUEST.value(), 
+            null
+        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<ApiResponse<Object>> handleSignature(SignatureException ex){
+        ApiResponse<Object> response = new ApiResponse<Object>(
+            "Invalid Token", 
+            HttpStatus.FORBIDDEN.value(), 
+            null
+        );
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+        
 }

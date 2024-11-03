@@ -4,9 +4,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.UserDTO;
+import com.ms.test_api.dto.request.UserCreationRequest;
+import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.model.UserSoccerField;
 import com.ms.test_api.service.impl.UserServiceImpl;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -35,7 +38,7 @@ public class UserController {
     }
 
     @PostMapping
-    public UserSoccerField registerUser(@RequestBody UserSoccerField user){
+    public ResponseEntity<ApiResponse<UserSoccerField>> registerUser(@RequestBody @Valid UserCreationRequest user){
         return userServiceImpl.registerUser(user);
     }
 

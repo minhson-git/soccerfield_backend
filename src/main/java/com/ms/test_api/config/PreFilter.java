@@ -2,6 +2,7 @@ package com.ms.test_api.config;
 
 import java.io.IOException;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,9 +40,7 @@ public class PreFilter extends OncePerRequestFilter{
         response.setHeader("Access-Control-Max-Age", "3600");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept, X-Requested-With, remember-me");
 
-
         final String authorizaion = request.getHeader("Authorization");
-        //log.info("Authorization: {}", authorizaion);
         
         if(StringUtils.isBlank(authorizaion) || !authorizaion.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -49,7 +48,6 @@ public class PreFilter extends OncePerRequestFilter{
         }
 
         final String token = authorizaion.substring("Bearer ".length());
-        //log.info("Token: {}", token);
 
         final String userName = jwtService.extractUsername(token);
 

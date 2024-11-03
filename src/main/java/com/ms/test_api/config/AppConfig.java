@@ -19,7 +19,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.ms.test_api.service.UserService;
 
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 
@@ -35,7 +34,7 @@ public class AppConfig {
     public WebMvcConfigurer corsConfigurer(){
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(@NonNull CorsRegistry registry){
+            public void addCorsMappings(CorsRegistry registry){
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:3000")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
@@ -57,9 +56,7 @@ public class AppConfig {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers("/auth/**").permitAll()
             .requestMatchers(HttpMethod.POST ,"/api/users").permitAll()
-            .requestMatchers("/api/bookings/**").hasAuthority("ADMIN")
-            .requestMatchers(HttpMethod.POST, "/api/bookings").hasAuthority("USER")
-            .requestMatchers(HttpMethod.GET, "/api/users/**").hasAuthority("ADMIN")                                            
+            .requestMatchers("/api/**").permitAll()                                          
             .anyRequest().authenticated())
             .sessionManagement(manager->manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(provider()).addFilterBefore(preFilter, UsernamePasswordAuthenticationFilter.class);

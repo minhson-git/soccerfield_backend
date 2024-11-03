@@ -27,7 +27,7 @@ public class Branch {
     private String address;
     private String phone;
 
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Field> fields = new ArrayList<>();
 
 }

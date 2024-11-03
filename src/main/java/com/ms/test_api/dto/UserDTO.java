@@ -7,6 +7,7 @@ public class UserDTO {
 
     private String cccd;
     private String username;
+    
     private String password;
     private String email;
     private String fullname;
@@ -24,9 +25,10 @@ public class UserDTO {
         this.role = role;
     }
 
-    public UserDTO(String cccd, String fullName) {
+    public UserDTO(String cccd, String fullName, RoleDTO roleDTO) {
         this.cccd = cccd;
         this.fullname = fullName;
+        this.role = roleDTO;
     }
 
 }

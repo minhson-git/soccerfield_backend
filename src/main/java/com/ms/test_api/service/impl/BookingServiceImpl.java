@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.ms.test_api.dto.BookingDTO;
 import com.ms.test_api.dto.FieldDTO;
+import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.exception.BookingNotFoundException;
 import com.ms.test_api.model.Booking;
@@ -28,7 +29,8 @@ public class BookingServiceImpl implements BookingService{
         return bookings.stream()
             .map(b -> new BookingDTO(
                 b.getBookingId(),
-                new UserDTO(b.getUser().getCCCD(), b.getUser().getFullname()),
+                new UserDTO(b.getUser().getCCCD(), b.getUser().getFullname(), 
+                new RoleDTO(b.getUser().getRole().getId(), b.getUser().getRole().getName())),
                 new FieldDTO(b.getField().getFieldId(), b.getField().getFieldType()),
                 b.getStartTime(),
                 b.getEndTime(),
@@ -47,7 +49,8 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking not exist with id: "+id));
         BookingDTO bookingDTO = new BookingDTO(
             booking.getBookingId(),
-            new UserDTO(booking.getUser().getCCCD(), booking.getUser().getFullname()),
+            new UserDTO(booking.getUser().getCCCD(), booking.getUser().getFullname(), 
+            new RoleDTO(booking.getUser().getRole().getId(), booking.getUser().getRole().getName())),
             new FieldDTO(booking.getField().getFieldId(), booking.getField().getFieldType()),
             booking.getStartTime(),
             booking.getEndTime(),
