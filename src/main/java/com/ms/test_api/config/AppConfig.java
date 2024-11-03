@@ -55,7 +55,6 @@ public class AppConfig {
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests.requestMatchers("/auth/**").permitAll()
-            .requestMatchers(HttpMethod.POST ,"/api/users").permitAll()
             .requestMatchers("/api/**").permitAll()                                          
             .anyRequest().authenticated())
             .sessionManagement(manager->manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
