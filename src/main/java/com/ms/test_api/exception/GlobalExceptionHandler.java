@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.ms.test_api.dto.response.ApiResponse;
 
-import io.jsonwebtoken.security.SignatureException;
-
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -53,15 +51,4 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
-
-    @ExceptionHandler(SignatureException.class)
-    public ResponseEntity<ApiResponse<Object>> handleSignature(SignatureException ex){
-        ApiResponse<Object> response = new ApiResponse<Object>(
-            "Invalid Token", 
-            HttpStatus.FORBIDDEN.value(), 
-            null
-        );
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
-    }
-        
 }

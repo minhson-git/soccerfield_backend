@@ -17,9 +17,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@NoArgsConstructor
 @Table(name = "user")
 public class UserSoccerField implements UserDetails {
 
@@ -36,15 +38,11 @@ public class UserSoccerField implements UserDetails {
     @JoinColumn(name = "role_id")
     private Role role;
 
-    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(getRole().getName().toUpperCase()));
         return authorities;
-    }
-    
-    public UserSoccerField() {
     }
 
     public UserSoccerField(String CCCD, String username, String password, String email, String fullname, String phone,
