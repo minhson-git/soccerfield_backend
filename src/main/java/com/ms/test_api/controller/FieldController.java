@@ -2,6 +2,7 @@ package com.ms.test_api.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.FieldDTO;
-import com.ms.test_api.model.Field;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Field;
 import com.ms.test_api.service.impl.FieldServiceImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -27,22 +29,52 @@ public class FieldController {
 
     @GetMapping
     public ResponseEntity<List<FieldDTO>> getAllFields(){
-        List<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields();
-        return ResponseEntity.ok(fieldDTOs);
+        try {
+            List<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields();
+            ApiResponse<List<FieldDTO>> response = new ApiResponse<>(
+                "Successfully retrieved field data",
+                HttpStatus.OK.value(),
+                fieldDTOs
+            );
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (Exception e) {
+            // TODO: handle exception
+            ApiResponse<List<FieldDTO>> response = new ApiResponse<>(
+                "Failed to retrieve field data",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping
-    public Field addField(@RequestBody Field field){
-        return fieldServiceImpl.addField(field);
+    public ResponseEntity<ApiResponse<Field>> addField(@RequestBody Field field){
+        try {
+            Field fields = fieldServiceImpl.addField(field);
+            ApiResponse<Field> response = new ApiResponse<Field>(
+                "Field created successfully", 
+                HttpStatus.CREATED.value(), 
+                fields
+            ); 
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse<Field> response = new ApiResponse<>(
+                "Failed to create field",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FieldDTO> getFieldById(@PathVariable int id){
+    public ResponseEntity<ApiResponse<FieldDTO>> getFieldById(@PathVariable int id){
         return fieldServiceImpl.getFieldById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Field> updateField(@PathVariable int id, @RequestBody Field field){
+    public ResponseEntity<ApiResponse<Field>> updateField(@PathVariable int id, @RequestBody Field field){
         return fieldServiceImpl.updateFieldById(id, field);
     }
 

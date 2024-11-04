@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.RoleDTO;
-import com.ms.test_api.model.Role;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Role;
 
 public interface RoleService {
 
@@ -13,9 +14,9 @@ public interface RoleService {
 
     Role addRole(Role role);
 
-    ResponseEntity<RoleDTO> getRoleById(int id);
+    ResponseEntity<ApiResponse<RoleDTO>> getRoleById(int id);
 
-    ResponseEntity<Role> updateRole(int id, Role role);
+    ResponseEntity<ApiResponse<Role>> updateRole(int id, Role role);
 
     ResponseEntity<?> deleteRole(int id);
 

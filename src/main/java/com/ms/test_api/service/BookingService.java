@@ -5,7 +5,8 @@ import java.util.*;
 import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.BookingDTO;
-import com.ms.test_api.model.Booking;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Booking;
 
 public interface BookingService {
 
@@ -13,9 +14,9 @@ public interface BookingService {
 
     Booking addBooking(Booking booking);
 
-    ResponseEntity<BookingDTO> getBookingById(Long id);
+    ResponseEntity<ApiResponse<BookingDTO>> getBookingById(Long id);
 
-    ResponseEntity<Booking> updateBooking(Long id, Booking booking);
+    ResponseEntity<ApiResponse<Booking>> updateBooking(Long id, Booking booking);
 
     ResponseEntity<?> deleteBooking(Long id);
 

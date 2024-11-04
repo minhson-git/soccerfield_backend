@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.ms.test_api.dto.RoleDTO;
-import com.ms.test_api.model.Role;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Role;
 import com.ms.test_api.reponsitory.RoleRepository;
 import com.ms.test_api.service.RoleService;
 
@@ -33,28 +35,73 @@ public class RoleServiceImpl implements RoleService{
     }
 
     @Override
-    public ResponseEntity<RoleDTO> getRoleById(int id) {
-        Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not exist with id: " + id));
-        RoleDTO roleDTOs = new RoleDTO(role.getId(), role.getName());
-        return ResponseEntity.ok(roleDTOs);
+    public ResponseEntity<ApiResponse<RoleDTO>> getRoleById(int id) {
+        try {
+            Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not exist with id: " + id));
+            RoleDTO roleDTOs = new RoleDTO(role.getId(), role.getName());
+            
+            ApiResponse<RoleDTO> response = new ApiResponse<RoleDTO>(
+                "Successfully retrieved role data", 
+                HttpStatus.OK.value(), 
+                roleDTOs
+            );
+            return new ResponseEntity<ApiResponse<RoleDTO>>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<RoleDTO> response = new ApiResponse<RoleDTO>(
+                "Failed retrieved role data", 
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                null
+            );
+            return new ResponseEntity<ApiResponse<RoleDTO>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        
     }
 
     @Override
-    public ResponseEntity<Role> updateRole(int id, Role roleDetails) {
-        Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not exist with id: " + id));
-
-        role.setId(roleDetails.getId());
-        role.setName(roleDetails.getName());
-
-        Role updateRole = roleRepository.save(role);
-        return ResponseEntity.ok(updateRole);
+    public ResponseEntity<ApiResponse<Role>> updateRole(int id, Role roleDetails) {
+        try {            
+            Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not exist with id: " + id));
+    
+            role.setId(role.getId());
+            role.setName(roleDetails.getName());
+    
+            roleRepository.save(role);
+            ApiResponse<Role> response = new ApiResponse<Role>(
+                "Updated role sucessfully", 
+                HttpStatus.OK.value(), 
+                null
+            );
+            return new ResponseEntity<ApiResponse<Role>>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<Role> response = new ApiResponse<Role>(
+                "Failed to update role", 
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                null
+            );
+            return new ResponseEntity<ApiResponse<Role>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        
     }
 
     @Override
     public ResponseEntity<?> deleteRole(int id) {
-        Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not exist with id: " + id));
-        roleRepository.delete(role);
-        return ResponseEntity.ok().build();
+        try {
+            Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not exist with id: " + id));
+            roleRepository.delete(role);
+            ApiResponse<String> response = new ApiResponse<String>(
+                "Delete role sucessfully", 
+                HttpStatus.OK.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<String>(
+                "Failed to delete role", 
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

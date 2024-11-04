@@ -9,7 +9,7 @@ import com.ms.test_api.dto.request.IntrospectRequest;
 import com.ms.test_api.dto.request.SignInRequest;
 import com.ms.test_api.dto.response.IntrospectResponse;
 import com.ms.test_api.dto.response.TokenResponse;
-import com.ms.test_api.model.UserSoccerField;
+import com.ms.test_api.modal.UserSoccerField;
 import com.ms.test_api.reponsitory.UserReponsitory;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;

@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.FieldDTO;
-import com.ms.test_api.model.Field;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Field;
 
 
 public interface FieldService {
@@ -14,9 +15,9 @@ public interface FieldService {
 
     Field addField(Field field);
 
-    ResponseEntity<FieldDTO> getFieldById(int id);
+    ResponseEntity<ApiResponse<FieldDTO>> getFieldById(int id);
 
-    ResponseEntity<Field> updateFieldById(int id, Field field);
+    ResponseEntity<ApiResponse<Field>> updateFieldById(int id, Field field);
 
     ResponseEntity<?> deleteField(int id);
 

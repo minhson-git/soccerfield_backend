@@ -11,9 +11,10 @@ public class FieldDTO {
     private String status;
     private BranchDTO branch;
 
-    public FieldDTO(int fieldId, String fieldType) {
+    public FieldDTO(int fieldId, String fieldType, BranchDTO branchDTO) {
         this.fieldId = fieldId;
         this.fieldType = fieldType;
+        this.branch = branchDTO;
     }
     
     public FieldDTO(int id, String fieldType, double pricePerHour, String status, BranchDTO branchDTO){

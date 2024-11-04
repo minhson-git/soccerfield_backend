@@ -1,14 +1,13 @@
 package com.ms.test_api.controller;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.model.Branch;
+import com.ms.test_api.modal.Branch;
 import com.ms.test_api.service.impl.BranchServiceImpl;
 
 import lombok.RequiredArgsConstructor;

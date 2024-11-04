@@ -1,4 +1,4 @@
-package com.ms.test_api.model;
+package com.ms.test_api.modal;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

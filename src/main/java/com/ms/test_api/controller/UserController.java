@@ -7,7 +7,7 @@ import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.dto.request.UserCreationRequest;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.model.UserSoccerField;
+import com.ms.test_api.modal.UserSoccerField;
 import com.ms.test_api.service.impl.UserServiceImpl;
 
 import jakarta.validation.Valid;
@@ -46,7 +46,7 @@ public class UserController {
                 HttpStatus.OK.value(), 
                 userDTOs
             );
-            return new ResponseEntity<ApiResponse<List<UserDTO>>>(response, HttpStatus.OK);
+            return new ResponseEntity(response, HttpStatus.OK);
         } catch (Exception e) {
             ApiResponse<List<BranchDTO>> response = new ApiResponse<>(
                 "Failed to retrieve user data",
@@ -63,18 +63,18 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserDTO> getUserByUsername(@PathVariable String username){
+    public ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(@PathVariable String username){
         return userServiceImpl.getUserByUsername(username);
     }
 
-    @PutMapping("/{username}")
-    public ResponseEntity<UserSoccerField> updateUser(@PathVariable String username, @RequestBody UserSoccerField user){
-        return userServiceImpl.updateUserByUsername(username, user);
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<UserSoccerField>> updateUser(@PathVariable int id, @RequestBody UserSoccerField user){
+        return userServiceImpl.updateUserByUsername(id, user);
     }
 
-    @DeleteMapping("/{username}")
-    public ResponseEntity<?> deleteUser(@PathVariable String username){
-        return userServiceImpl.deleteUser(username);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable int id){
+        return userServiceImpl.deleteUser(id);
     }
     
 

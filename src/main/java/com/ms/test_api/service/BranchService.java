@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.model.Branch;
+import com.ms.test_api.modal.Branch;
 
 public interface BranchService {
 

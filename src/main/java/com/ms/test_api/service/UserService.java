@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.dto.request.UserCreationRequest;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.model.UserSoccerField;
+import com.ms.test_api.modal.UserSoccerField;
 
 public interface UserService {
 
@@ -18,10 +18,10 @@ public interface UserService {
 
     ResponseEntity<ApiResponse<UserSoccerField>> registerUser(UserCreationRequest user);
 
-    ResponseEntity<UserDTO> getUserByUsername(String username);
+    ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(String username);
 
-    ResponseEntity<UserSoccerField> updateUserByUsername(String username, UserSoccerField user);
+    ResponseEntity<ApiResponse<UserSoccerField>> updateUserByUsername(int id, UserSoccerField user);
 
-    ResponseEntity<?> deleteUser(String username);
+    ResponseEntity<?> deleteUser(int id);
 
 }

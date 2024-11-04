@@ -3,12 +3,10 @@ package com.ms.test_api.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,15 +15,17 @@ import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.dto.request.UserCreationRequest;
 import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.exception.UserNotFoundException;
-import com.ms.test_api.model.Role;
-import com.ms.test_api.model.UserSoccerField;
+import com.ms.test_api.modal.Role;
+import com.ms.test_api.modal.UserSoccerField;
 import com.ms.test_api.reponsitory.RoleRepository;
 import com.ms.test_api.reponsitory.UserReponsitory;
 import com.ms.test_api.service.UserService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService{
 
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService{
 
     private final RoleRepository roleRepository;
 
-    PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetailsService userDetailsService() {
@@ -45,24 +45,29 @@ public class UserServiceImpl implements UserService{
         List<UserSoccerField> users = userReponsitory.findAll();
         return users.stream()
             .map(user -> new UserDTO(
-                user.getCCCD(), 
+                user.getUserId(),
+                user.getCitizenId(), 
                 user.getUsername(), 
                 user.getEmail(), 
                 user.getFullname(), 
                 user.getPhone(), 
                 new RoleDTO(user.getRole().getId(), user.getRole().getName())
                 )).collect(Collectors.toList());
+        
     }
 
     @Override
     public ResponseEntity<ApiResponse<UserSoccerField>> registerUser(UserCreationRequest user) {
 
-        if(userReponsitory.existsByUsername(user.getUsername()) || userReponsitory.existsByCCCD(user.getCccd()) || userReponsitory.existsByEmail(user.getEmail())){
-            throw new RuntimeException("User existed or UserID existed or Email existed");
+        if(userReponsitory.existsByUsername(user.getUsername()) || 
+        userReponsitory.existsByCitizenId(user.getCitizenId()) || 
+        userReponsitory.existsByEmail(user.getEmail())){
+            log.error("User with provided username, citizenId, or email already exists");
+            throw new RuntimeException("User existed or CitizenId existed or Email existed");
         } 
         try {
             UserSoccerField newUser = new UserSoccerField();
-            newUser.setCCCD(user.getCccd());
+            newUser.setCitizenId(user.getCitizenId());
             newUser.setUsername(user.getUsername());
             newUser.setPassword(passwordEncoder.encode(user.getPassword()));
             newUser.setEmail(user.getEmail());
@@ -92,41 +97,89 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public ResponseEntity<UserDTO> getUserByUsername(String username) {
-        UserSoccerField user = userReponsitory.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User not exist with username: "+ username));
-        UserDTO userDTOs = new UserDTO(
-            user.getCCCD(), 
-            user.getUsername(), 
-            user.getEmail(), 
-            user.getFullname(), 
-            user.getPhone(), 
-            new RoleDTO(user.getRole().getId(), user.getRole().getName()));
-        
-        return ResponseEntity.ok(userDTOs);
+    public ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(String username) {
+        try {     
+            UserSoccerField user = userReponsitory.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User not exist with username: "+ username));
+            UserDTO userDTOs = new UserDTO(
+                user.getUserId(),
+                user.getCitizenId(), 
+                user.getUsername(), 
+                user.getEmail(), 
+                user.getFullname(), 
+                user.getPhone(), 
+                new RoleDTO(user.getRole().getId(), user.getRole().getName()));
+            
+            ApiResponse<UserDTO> response = new ApiResponse<UserDTO>(
+                "Successfully retrieved user data", 
+                HttpStatus.OK.value(), 
+                userDTOs
+            );
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<UserDTO> response = new ApiResponse<UserDTO>(
+                "Failed retrieved user data", 
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
-    public ResponseEntity<UserSoccerField> updateUserByUsername(String username, UserSoccerField userDetail) {
-        UserSoccerField user = userReponsitory.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User not exist with username: " + username));
+    public ResponseEntity<ApiResponse<UserSoccerField>> updateUserByUsername(int id, UserSoccerField userDetail) {
+        try {
+            UserSoccerField user = userReponsitory.findById(id).orElseThrow(() -> new UserNotFoundException("User not exist with id: " + id));
+    
+            user.setUserId(user.getUserId());
+            user.setCitizenId(userDetail.getCitizenId());
+            user.setEmail(userDetail.getEmail());
+            user.setFullname(userDetail.getFullname());
+            user.setUsername(userDetail.getUsername());
+            user.setPassword(user.getPassword());
+            user.setPhone(userDetail.getPhone());
+            
+            Role role = roleRepository.findById(user.getRole().getId()).orElseThrow(()-> new RuntimeException("Role not found"));
+            user.setRole(role);
+            
+            userReponsitory.save(user);
 
-        user.setCCCD(userDetail.getCCCD());
-        user.setEmail(userDetail.getEmail());
-        user.setFullname(userDetail.getFullname());
-        user.setUsername(userDetail.getUsername());
-        user.setPassword(user.getPassword());
-        user.setPhone(userDetail.getPhone());
-        user.setRole(userDetail.getRole());
-
-        UserSoccerField updateUser = userReponsitory.save(user);
-        return ResponseEntity.ok(updateUser);
+            ApiResponse<UserSoccerField> response = new ApiResponse<UserSoccerField>(
+                "Updated successfully user", 
+                HttpStatus.OK.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<UserSoccerField> response = new ApiResponse<UserSoccerField>(
+                "Failed retrieved user data", 
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
-    public ResponseEntity<?> deleteUser(String username) {
-        UserSoccerField user = userReponsitory.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not exist with username: " + username));
-
-        userReponsitory.delete(user);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deleteUser(int id) {
+        try {
+            UserSoccerField user = userReponsitory.findById(id)
+                    .orElseThrow(() -> new UserNotFoundException("User not exist with id: " + id));
+    
+            userReponsitory.delete(user);
+            ApiResponse<String> response = new ApiResponse<String>(
+                "Deleted successfully user", 
+                HttpStatus.OK.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ApiResponse<String> response = new ApiResponse<String>(
+                "Failed to delete user", 
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

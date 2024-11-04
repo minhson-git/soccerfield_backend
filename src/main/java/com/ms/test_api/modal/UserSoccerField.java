@@ -1,4 +1,4 @@
-package com.ms.test_api.model;
+package com.ms.test_api.modal;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,6 +12,8 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -26,7 +28,9 @@ import lombok.NoArgsConstructor;
 public class UserSoccerField implements UserDetails {
 
     @Id
-    private String CCCD;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int userId;
+    private String citizenId;
     private String username;
     @Column(name = "pwd")
     private String password;
@@ -38,16 +42,18 @@ public class UserSoccerField implements UserDetails {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new SimpleGrantedAuthority(getRole().getName().toUpperCase()));
         return authorities;
     }
-
-    public UserSoccerField(String CCCD, String username, String password, String email, String fullname, String phone,
-            Role role) {
-        this.CCCD = CCCD;
+    
+    public UserSoccerField(int userId, String citizenId, String username, String password, String email,
+            String fullname, String phone, Role role) {
+        this.userId = userId;
+        this.citizenId = citizenId;
         this.username = username;
         this.password = password;
         this.email = email;
@@ -55,6 +61,5 @@ public class UserSoccerField implements UserDetails {
         this.phone = phone;
         this.role = role;
     }
-    
 
 }

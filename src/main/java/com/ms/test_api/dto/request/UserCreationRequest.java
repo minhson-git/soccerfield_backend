@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class UserCreationRequest {
 
-    private String cccd;
+    private String citizenId;
 
     @Size(min = 3, message = "Username must be at least 3 characters")
     private String username;

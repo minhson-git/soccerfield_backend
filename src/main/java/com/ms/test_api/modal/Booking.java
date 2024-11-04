@@ -1,4 +1,4 @@
-package com.ms.test_api.model;
+package com.ms.test_api.modal;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,7 +24,7 @@ public class Booking {
     private Long bookingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "CCCD")
+    @JoinColumn(name = "userId")
     private UserSoccerField user;
 
     @ManyToOne(fetch = FetchType.LAZY)

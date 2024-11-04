@@ -9,7 +9,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserDTO {
 
-    private String cccd;
+    private int userId;
+    private String citizenId;
     private String username;
     
     private String email;
@@ -17,8 +18,8 @@ public class UserDTO {
     private String phone;
     private RoleDTO role;
 
-    public UserDTO(String cccd, String fullName, RoleDTO roleDTO) {
-        this.cccd = cccd;
+    public UserDTO(int userId, String fullName, RoleDTO roleDTO) {
+        this.userId = userId;
         this.fullname = fullName;
         this.role = roleDTO;
     }

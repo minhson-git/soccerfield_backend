@@ -1,4 +1,4 @@
-package com.ms.test_api.model;
+package com.ms.test_api.modal;
 
 import java.util.ArrayList;
 import java.util.List;

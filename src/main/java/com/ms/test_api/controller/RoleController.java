@@ -2,6 +2,7 @@ package com.ms.test_api.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +13,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.RoleDTO;
-import com.ms.test_api.model.Role;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Branch;
+import com.ms.test_api.modal.Role;
 import com.ms.test_api.service.impl.RoleServiceImpl;
 
 import lombok.RequiredArgsConstructor;
@@ -26,22 +30,53 @@ public class RoleController {
     private final RoleServiceImpl roleServiceImpl;
 
     @GetMapping
-    public List<RoleDTO> getAllRoles(){
-        return roleServiceImpl.getAllRoles();
+    public ResponseEntity<ApiResponse<List<RoleDTO>>> getAllRoles(){
+        try {
+            List<RoleDTO> roles = roleServiceImpl.getAllRoles();
+            ApiResponse<List<RoleDTO>> response = new ApiResponse<>(
+                "Successfully retrieved role data",
+                HttpStatus.OK.value(),
+                roles
+            );
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (Exception e) {
+            // TODO: handle exception
+            ApiResponse<List<RoleDTO>> response = new ApiResponse<>(
+                "Failed to retrieve role data",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping
-    public Role addRole(Role role){
-        return roleServiceImpl.addRole(role);
+    public ResponseEntity<ApiResponse<Role>> addRole(Role role){
+        try {
+            Role roles = roleServiceImpl.addRole(role);
+            ApiResponse<Role> response = new ApiResponse<Role>(
+                "Role created successfully", 
+                HttpStatus.CREATED.value(), 
+                roles
+            ); 
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse<Role> response = new ApiResponse<>(
+                "Failed to create role",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RoleDTO> getRoleById(@PathVariable int id){
+    public ResponseEntity<ApiResponse<RoleDTO>> getRoleById(@PathVariable int id){
         return roleServiceImpl.getRoleById(id);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Role> updateRole(@PathVariable int id, @RequestBody Role role){
+    public ResponseEntity<ApiResponse<Role>> updateRole(@PathVariable int id, @RequestBody Role role){
         return roleServiceImpl.updateRole(id, role);
     }
 

@@ -4,11 +4,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.BookingDTO;
-import com.ms.test_api.model.Booking;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.modal.Booking;
 import com.ms.test_api.service.impl.BookingServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,21 +30,52 @@ public class BookingControlller {
     private final BookingServiceImpl bookingServiceImpl;
 
     @GetMapping
-    public List<BookingDTO> getAllBookings(){
-        return bookingServiceImpl.getAllBookings();
+    public ResponseEntity<ApiResponse<List<BookingDTO>>> getAllBookings(){
+        try {
+            List<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings();
+            ApiResponse<List<BookingDTO>> response = new ApiResponse<>(
+                "Successfully retrieved branch data",
+                HttpStatus.OK.value(),
+                bookingDTOs
+            );
+            return new ResponseEntity(response, HttpStatus.OK);
+        } catch (Exception e) {
+            // TODO: handle exception
+            ApiResponse<List<BookingDTO>> response = new ApiResponse<>(
+                "Failed to retrieve branch data",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping
-    public Booking addBooking(@RequestBody Booking booking){
-        return bookingServiceImpl.addBooking(booking);
+    public ResponseEntity<ApiResponse<Booking>> addBooking(@RequestBody Booking booking){
+        try {
+            Booking bookings = bookingServiceImpl.addBooking(booking);
+            ApiResponse<Booking> response = new ApiResponse<Booking>(
+                "Booking created successfully", 
+                HttpStatus.CREATED.value(), 
+                bookings
+            ); 
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (Exception e) {
+            ApiResponse<Booking> response = new ApiResponse<>(
+                "Failed to create booking",
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                null
+            );
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<BookingDTO> getBookingById(@PathVariable Long id){
+    public ResponseEntity<ApiResponse<BookingDTO>> getBookingById(@PathVariable Long id){
         return bookingServiceImpl.getBookingById(id);
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Booking> updateBooking(@PathVariable Long id, @RequestBody Booking booking){
+    public ResponseEntity<ApiResponse<Booking>> updateBooking(@PathVariable Long id, @RequestBody Booking booking){
         return bookingServiceImpl.updateBooking(id, booking);
     }
     @DeleteMapping("/{id}")

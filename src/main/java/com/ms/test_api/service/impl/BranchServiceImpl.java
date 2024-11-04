@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.model.Branch;
+import com.ms.test_api.modal.Branch;
 import com.ms.test_api.reponsitory.BranchReponsitory;
 import com.ms.test_api.service.BranchService;
 
