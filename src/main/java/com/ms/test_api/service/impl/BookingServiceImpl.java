@@ -14,8 +14,14 @@ import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.exception.BookingNotFoundException;
+import com.ms.test_api.exception.FieldNotFoundException;
+import com.ms.test_api.exception.UserNotFoundException;
 import com.ms.test_api.modal.Booking;
+import com.ms.test_api.modal.Field;
+import com.ms.test_api.modal.UserSoccerField;
 import com.ms.test_api.reponsitory.BookingRepository;
+import com.ms.test_api.reponsitory.FieldRepository;
+import com.ms.test_api.reponsitory.UserReponsitory;
 import com.ms.test_api.service.BookingService;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +32,10 @@ public class BookingServiceImpl implements BookingService{
 
     private final BookingRepository bookingRepository;
 
+    private final FieldRepository fieldRepository;
+
+    private final UserReponsitory userReponsitory;
+
     @Override
     public List<BookingDTO> getAllBookings() {
         List<Booking> bookings = bookingRepository.findAll();
@@ -33,14 +43,20 @@ public class BookingServiceImpl implements BookingService{
             .map(b -> new BookingDTO(
                 b.getBookingId(),
                 new UserDTO(
-                    b.getUser().getUserId(), 
+                    b.getUser().getUserId(),
+                    b.getUser().getCitizenId(),
+                    b.getUser().getUsername(),
+                    b.getUser().getEmail(),
+                    b.getUser().getPhone(),
                     b.getUser().getFullname(), 
                     new RoleDTO(
                         b.getUser().getRole().getId(), 
                         b.getUser().getRole().getName())),
                 new FieldDTO(
                     b.getField().getFieldId(), 
-                    b.getField().getFieldType(), 
+                    b.getField().getFieldType(),
+                    b.getField().getPricePerHour(),
+                    b.getField().isStatus(),
                     new BranchDTO(
                         b.getField().getBranch().getBranchId(), 
                         b.getField().getBranch().getBranchName(), 
@@ -49,12 +65,29 @@ public class BookingServiceImpl implements BookingService{
                 b.getStartTime(),
                 b.getEndTime(),
                 b.getBookingDate(),
-                b.getStatus()
+                b.isStatus()
             )).collect(Collectors.toList());
     }
 
     @Override
     public Booking addBooking(Booking booking) {
+
+        UserSoccerField user = userReponsitory.findById(booking.getUser().getUserId()).orElseThrow(()-> new UserNotFoundException("User not found"));
+
+        Field hasBooking = fieldRepository.findByFieldId(booking.getField().getFieldId()).orElseThrow(()-> new FieldNotFoundException("Field not exist"));
+
+        if (hasBooking.isStatus() == true){
+            throw new RuntimeException("Field has been booked");
+        }
+
+        if(hasBooking != null){
+            hasBooking.setStatus(true);
+        }
+
+        fieldRepository.save(hasBooking);
+
+        booking.setUser(user);
+
         return bookingRepository.save(booking);
     }
 
@@ -65,14 +98,20 @@ public class BookingServiceImpl implements BookingService{
             BookingDTO bookingDTO = new BookingDTO(
                 booking.getBookingId(),
                     new UserDTO(
-                        booking.getUser().getUserId(), 
-                        booking.getUser().getFullname(), 
+                        booking.getUser().getUserId(),
+                        booking.getUser().getCitizenId(),
+                        booking.getUser().getFullname(),
+                        booking.getUser().getUsername(),
+                        booking.getUser().getEmail(),
+                        booking.getUser().getPhone(),
                         new RoleDTO(
                             booking.getUser().getRole().getId(), 
                             booking.getUser().getRole().getName())),
                     new FieldDTO(
                         booking.getField().getFieldId(), 
-                        booking.getField().getFieldType(), 
+                        booking.getField().getFieldType(),
+                        booking.getField().getPricePerHour(),
+                        booking.getField().isStatus(),
                         new BranchDTO(
                             booking.getField().getBranch().getBranchId(), 
                             booking.getField().getBranch().getBranchName(), 
@@ -81,7 +120,7 @@ public class BookingServiceImpl implements BookingService{
                 booking.getStartTime(),
                 booking.getEndTime(),
                 booking.getBookingDate(),
-                booking.getStatus());
+                booking.isStatus());
             
             ApiResponse<BookingDTO> response = new ApiResponse<BookingDTO>(
                 "Successfully retrieved booking data", 
@@ -104,7 +143,7 @@ public class BookingServiceImpl implements BookingService{
     public ResponseEntity<ApiResponse<Booking>> updateBooking(Long id, Booking bookingDetails) {
         try {
             Booking booking = bookingRepository.findById(id)
-            .orElseThrow(()-> new BookingNotFoundException("Booking not exist with id: "+id));
+                .orElseThrow(()-> new BookingNotFoundException("Booking not exist with id: "+id));
 
             booking.setBookingId(booking.getBookingId());
             booking.setUser(booking.getUser());
@@ -112,9 +151,19 @@ public class BookingServiceImpl implements BookingService{
             booking.setStartTime(bookingDetails.getStartTime());
             booking.setEndTime(bookingDetails.getEndTime());
             booking.setBookingDate(bookingDetails.getBookingDate());
-            booking.setStatus(bookingDetails.getStatus());
+            booking.setStatus(bookingDetails.isStatus());
 
             bookingRepository.save(booking);
+
+            Field field = fieldRepository.findByFieldId(booking.getField().getFieldId()).orElseThrow(() -> new FieldNotFoundException("Field not found"));
+
+            if(booking.isStatus() == false) {
+                field.setStatus(true);
+            } else {
+                field.setStatus(false);
+            }
+
+            fieldRepository.save(field);
 
             ApiResponse<Booking> response = new ApiResponse<Booking>(
                 "Updated successfully booking", 

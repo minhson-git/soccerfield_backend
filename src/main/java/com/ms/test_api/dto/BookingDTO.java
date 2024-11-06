@@ -9,18 +9,18 @@ import java.time.LocalDateTime;
 public class BookingDTO {
 
     private Long bookingId;
-    private UserDTO cccd;
-    private FieldDTO fieldID;
+    private UserDTO user;
+    private FieldDTO field;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private LocalDate bookingDate;
-    private String status;
+    private boolean status;
     
     public BookingDTO(Long bookingId, UserDTO cccd, FieldDTO fieldID, LocalDateTime startTime, LocalDateTime endTime,
-            LocalDate bookingDate, String status) {
+            LocalDate bookingDate, boolean status) {
         this.bookingId = bookingId;
-        this.cccd = cccd;
-        this.fieldID = fieldID;
+        this.user = cccd;
+        this.field = fieldID;
         this.startTime = startTime;
         this.endTime = endTime;
         this.bookingDate = bookingDate;

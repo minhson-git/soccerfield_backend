@@ -74,7 +74,7 @@ public class UserServiceImpl implements UserService{
             newUser.setFullname(user.getFullname());
             newUser.setPhone(user.getPhone());
 
-            Role role = roleRepository.findById(1).orElseThrow(()-> new RuntimeException("Role not found"));
+            Role role = roleRepository.findById(5).orElseThrow(()-> new RuntimeException("Role not found"));
             newUser.setRole(role);
         
             userReponsitory.save(newUser);

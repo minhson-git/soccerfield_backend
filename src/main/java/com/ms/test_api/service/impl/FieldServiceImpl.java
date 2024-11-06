@@ -12,10 +12,8 @@ import com.ms.test_api.dto.FieldDTO;
 import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.exception.BranchNotFoundException;
 import com.ms.test_api.exception.FieldNotFoundException;
-import com.ms.test_api.exception.UserNotFoundException;
 import com.ms.test_api.modal.Branch;
 import com.ms.test_api.modal.Field;
-import com.ms.test_api.modal.UserSoccerField;
 import com.ms.test_api.reponsitory.BranchReponsitory;
 import com.ms.test_api.reponsitory.FieldRepository;
 import com.ms.test_api.service.FieldService;
@@ -38,7 +36,7 @@ public class FieldServiceImpl implements FieldService{
                 field.getFieldId(),
                 field.getFieldType(),
                 field.getPricePerHour(),
-                field.getStatus(),
+                field.isStatus(),
                 new BranchDTO(
                     field.getBranch().getBranchId(),
                     field.getBranch().getBranchName(),
@@ -63,7 +61,7 @@ public class FieldServiceImpl implements FieldService{
                 field.getFieldId(),
                 field.getFieldType(),
                 field.getPricePerHour(),
-                field.getStatus(),
+                field.isStatus(),
                 new BranchDTO(
                     field.getBranch().getBranchId(),
                     field.getBranch().getBranchName(),
@@ -105,7 +103,7 @@ public class FieldServiceImpl implements FieldService{
             field.setFieldId(field.getFieldId());
             field.setFieldType(fieldDetail.getFieldType());
             field.setPricePerHour(fieldDetail.getPricePerHour());
-            field.setStatus(fieldDetail.getStatus());
+            field.setStatus(fieldDetail.isStatus());
 
             Branch branch = branchReponsitory.findById(field.getBranch().getBranchId()).orElseThrow(() -> new BranchNotFoundException("Branch not exist with id: "+ id));
             field.setBranch(branch);

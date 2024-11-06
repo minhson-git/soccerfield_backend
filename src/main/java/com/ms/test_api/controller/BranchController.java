@@ -54,11 +54,11 @@ public class BranchController {
     @PostMapping
     public ResponseEntity<ApiResponse<Branch>> createBranch(@RequestBody Branch branchDetail) {
         try {
-            Branch branch = branchServiceImpl.addBranch(branchDetail);
+            branchServiceImpl.addBranch(branchDetail);
             ApiResponse<Branch> response = new ApiResponse<Branch>(
                 "Branch created successfully", 
                 HttpStatus.CREATED.value(), 
-                branch
+                null
             ); 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {

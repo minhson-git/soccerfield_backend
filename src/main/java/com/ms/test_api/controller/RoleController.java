@@ -13,10 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.modal.Branch;
 import com.ms.test_api.modal.Role;
 import com.ms.test_api.service.impl.RoleServiceImpl;
 
@@ -51,13 +49,13 @@ public class RoleController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Role>> addRole(Role role){
+    public ResponseEntity<ApiResponse<Role>> addRole(@RequestBody Role role){
         try {
-            Role roles = roleServiceImpl.addRole(role);
+            roleServiceImpl.addRole(role);
             ApiResponse<Role> response = new ApiResponse<Role>(
                 "Role created successfully", 
                 HttpStatus.CREATED.value(), 
-                roles
+                null
             ); 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {

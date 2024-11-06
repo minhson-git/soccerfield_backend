@@ -25,7 +25,7 @@ public class Role {
     @Column(name = "role_name")
     private String name;
 
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "role", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
     private List<UserSoccerField> users;
 
 

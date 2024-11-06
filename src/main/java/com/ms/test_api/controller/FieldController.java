@@ -51,11 +51,11 @@ public class FieldController {
     @PostMapping
     public ResponseEntity<ApiResponse<Field>> addField(@RequestBody Field field){
         try {
-            Field fields = fieldServiceImpl.addField(field);
+            fieldServiceImpl.addField(field);
             ApiResponse<Field> response = new ApiResponse<Field>(
                 "Field created successfully", 
                 HttpStatus.CREATED.value(), 
-                fields
+                null
             ); 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {

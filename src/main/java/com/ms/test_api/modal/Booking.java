@@ -3,6 +3,7 @@ package com.ms.test_api.modal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -23,14 +24,14 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long bookingId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "userId")
     private UserSoccerField user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(name = "field_id")
     private Field field;
-
+    
     @Column(name = "start_time")
     private LocalDateTime startTime;
 
@@ -40,6 +41,6 @@ public class Booking {
     @Column(name = "booking_date")
     private LocalDate bookingDate;
 
-    private String status;
+    private boolean status;
 
 }

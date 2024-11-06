@@ -34,7 +34,7 @@ public class BookingControlller {
         try {
             List<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings();
             ApiResponse<List<BookingDTO>> response = new ApiResponse<>(
-                "Successfully retrieved branch data",
+                "Successfully retrieved booking data",
                 HttpStatus.OK.value(),
                 bookingDTOs
             );
@@ -42,7 +42,7 @@ public class BookingControlller {
         } catch (Exception e) {
             // TODO: handle exception
             ApiResponse<List<BookingDTO>> response = new ApiResponse<>(
-                "Failed to retrieve branch data",
+                "Failed to retrieve booking data",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 null
             );
@@ -53,11 +53,11 @@ public class BookingControlller {
     @PostMapping
     public ResponseEntity<ApiResponse<Booking>> addBooking(@RequestBody Booking booking){
         try {
-            Booking bookings = bookingServiceImpl.addBooking(booking);
+            bookingServiceImpl.addBooking(booking);
             ApiResponse<Booking> response = new ApiResponse<Booking>(
                 "Booking created successfully", 
                 HttpStatus.CREATED.value(), 
-                bookings
+                null
             ); 
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
