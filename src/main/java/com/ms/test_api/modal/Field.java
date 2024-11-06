@@ -37,7 +37,7 @@ public class Field {
     @JoinColumn(name = "branch_id")
     private Branch branch;
 
-    @OneToMany(mappedBy = "field", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
+    @OneToMany(mappedBy = "field", cascade = CascadeType.MERGE)
     private List<Booking> bookings;
     
 }
