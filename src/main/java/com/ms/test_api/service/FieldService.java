@@ -1,6 +1,5 @@
 package com.ms.test_api.service;
 
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +11,7 @@ import com.ms.test_api.modal.Field;
 
 public interface FieldService {
 
-    List<FieldDTO> getAllFields();
+    Page<FieldDTO> getAllFields(int page, int size, String branchName);
 
     Field addField(Field field);
 
@@ -21,7 +20,5 @@ public interface FieldService {
     ResponseEntity<ApiResponse<Field>> updateFieldById(int id, Field field);
 
     ResponseEntity<?> deleteField(int id);
-
-    ResponseEntity<ApiResponse<Page<FieldDTO>>> searchFieldByBranchName(String branchName, int page, int size);
 
 }

@@ -30,10 +30,12 @@ public class FieldController {
     private final FieldServiceImpl fieldServiceImpl;
 
     @GetMapping
-    public ResponseEntity<List<FieldDTO>> getAllFields(){
+    public ResponseEntity<Page<FieldDTO>> getAllFields(@RequestParam(required = false, defaultValue = "0") int page, 
+            @RequestParam(required = false, defaultValue = "10") int size,
+            @RequestParam(required = false, defaultValue = "") String branchName) {
         try {
-            List<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields();
-            ApiResponse<List<FieldDTO>> response = new ApiResponse<>(
+            Page<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields(page, size, branchName);
+            ApiResponse<Page<FieldDTO>> response = new ApiResponse<>(
                 "Successfully retrieved field data",
                 HttpStatus.OK.value(),
                 fieldDTOs
@@ -73,13 +75,6 @@ public class FieldController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<FieldDTO>> getFieldById(@PathVariable int id){
         return fieldServiceImpl.getFieldById(id);
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<FieldDTO>>> searchFieldByBranch(@RequestParam String branchName,
-        @RequestParam(required = false, defaultValue = "0") int page, 
-        @RequestParam(required = false, defaultValue = "10") int size){
-        return fieldServiceImpl.searchFieldByBranchName(branchName, page, size);
     }
 
     @PutMapping("/{id}")

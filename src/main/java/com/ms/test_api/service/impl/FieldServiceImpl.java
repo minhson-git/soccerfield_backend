@@ -32,22 +32,28 @@ public class FieldServiceImpl implements FieldService{
     private final BranchReponsitory branchReponsitory;
 
     @Override
-    public List<FieldDTO> getAllFields() {
-        List<Field> fields = fieldRepository.findAll();
-        return fields.stream().map(field -> 
-            new FieldDTO(
-                field.getFieldId(),
-                field.getFieldType(),
-                field.getPricePerHour(),
-                field.isStatus(),
-                new BranchDTO(
-                    field.getBranch().getBranchId(),
-                    field.getBranch().getBranchName(),
-                    field.getBranch().getAddress(),
-                    field.getBranch().getPhone()
-                )
-            )
-        ).collect(Collectors.toList());
+    public Page<FieldDTO> getAllFields(int page, int size, String branchName) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Field> fieldPage;
+        if(branchName.isEmpty()){
+            fieldPage = fieldRepository.findAll(pageable);
+        } else {
+            fieldPage = fieldRepository.findByBranch_BranchNameContainingIgnoreCase(branchName, pageable);
+        }
+
+        return fieldPage.map(field -> new FieldDTO(
+                            field.getFieldId(),
+                            field.getFieldType(),
+                            field.getPricePerHour(),
+                            field.isStatus(),
+                            new BranchDTO(
+                                field.getBranch().getBranchId(),
+                                field.getBranch().getBranchName(),
+                                field.getBranch().getAddress(),
+                                field.getBranch().getPhone())
+                            ));
     }
 
     @Override
@@ -160,32 +166,5 @@ public class FieldServiceImpl implements FieldService{
             );
             return new ResponseEntity<ApiResponse<?>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @Override
-    public ResponseEntity<ApiResponse<Page<FieldDTO>>> searchFieldByBranchName(String branchName, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Field> pageField = fieldRepository.findByBranch_BranchNameContainingIgnoreCase(branchName, pageable);
-
-        Page<FieldDTO> pageFieldDTO = pageField.map(field -> new FieldDTO(
-                                        field.getFieldId(),
-                                        field.getFieldType(),
-                                        field.getPricePerHour(),
-                                        field.isStatus(),
-                                        new BranchDTO(
-                                            field.getBranch().getBranchId(),
-                                            field.getBranch().getBranchName(),
-                                            field.getBranch().getAddress(),
-                                            field.getBranch().getPhone())
-                            ));
-
-        ApiResponse<Page<FieldDTO>> response = new ApiResponse<Page<FieldDTO>>(
-            "Successfully retrieved field data by branch", 
-            HttpStatus.OK.value(), 
-            pageFieldDTO
-        );
-        return new ResponseEntity<>(response, HttpStatus.OK);
-        
     }
 }
