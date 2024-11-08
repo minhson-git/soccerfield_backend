@@ -39,5 +39,6 @@ public class Field {
 
     @OneToMany(mappedBy = "field", cascade = CascadeType.MERGE)
     private List<Booking> bookings;
+
     
 }

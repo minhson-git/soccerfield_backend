@@ -3,6 +3,9 @@ package com.ms.test_api.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -157,5 +160,32 @@ public class FieldServiceImpl implements FieldService{
             );
             return new ResponseEntity<ApiResponse<?>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse<Page<FieldDTO>>> searchFieldByBranchName(String branchName, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Field> pageField = fieldRepository.findByBranch_BranchNameContainingIgnoreCase(branchName, pageable);
+
+        Page<FieldDTO> pageFieldDTO = pageField.map(field -> new FieldDTO(
+                                        field.getFieldId(),
+                                        field.getFieldType(),
+                                        field.getPricePerHour(),
+                                        field.isStatus(),
+                                        new BranchDTO(
+                                            field.getBranch().getBranchId(),
+                                            field.getBranch().getBranchName(),
+                                            field.getBranch().getAddress(),
+                                            field.getBranch().getPhone())
+                            ));
+
+        ApiResponse<Page<FieldDTO>> response = new ApiResponse<Page<FieldDTO>>(
+            "Successfully retrieved field data by branch", 
+            HttpStatus.OK.value(), 
+            pageFieldDTO
+        );
+        return new ResponseEntity<>(response, HttpStatus.OK);
+        
     }
 }
