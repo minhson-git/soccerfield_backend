@@ -11,4 +11,5 @@ public class TokenResponse implements Serializable{
     private boolean authenticated;
     private String token;
     private String role;
+    private int userId;
 }
