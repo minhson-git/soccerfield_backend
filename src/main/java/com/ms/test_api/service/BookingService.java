@@ -1,7 +1,7 @@
 package com.ms.test_api.service;
 
-import java.util.*;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.BookingDTO;
@@ -10,7 +10,7 @@ import com.ms.test_api.modal.Booking;
 
 public interface BookingService {
 
-    List<BookingDTO> getAllBookings();
+    Page<BookingDTO> getAllBookings(int page, int size, int user_id);
 
     Booking addBooking(Booking booking);
 

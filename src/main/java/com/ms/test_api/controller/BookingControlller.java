@@ -1,6 +1,7 @@
 package com.ms.test_api.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.BookingDTO;
@@ -10,6 +11,7 @@ import com.ms.test_api.service.impl.BookingServiceImpl;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,10 +32,12 @@ public class BookingControlller {
     private final BookingServiceImpl bookingServiceImpl;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BookingDTO>>> getAllBookings(){
+    public ResponseEntity<ApiResponse<Page<BookingDTO>>> getAllBookings(@RequestParam(required = false, defaultValue = "0") int page,
+             @RequestParam(required = false, defaultValue = "5") int size, 
+             @RequestParam(required = false, defaultValue = "0") int userId){
         try {
-            List<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings();
-            ApiResponse<List<BookingDTO>> response = new ApiResponse<>(
+            Page<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings(page, size, userId);
+            ApiResponse<Page<BookingDTO>> response = new ApiResponse<>(
                 "Successfully retrieved booking data",
                 HttpStatus.OK.value(),
                 bookingDTOs
@@ -41,7 +45,7 @@ public class BookingControlller {
             return new ResponseEntity(response, HttpStatus.OK);
         } catch (Exception e) {
             // TODO: handle exception
-            ApiResponse<List<BookingDTO>> response = new ApiResponse<>(
+            ApiResponse<Page<BookingDTO>> response = new ApiResponse<>(
                 "Failed to retrieve booking data",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 null

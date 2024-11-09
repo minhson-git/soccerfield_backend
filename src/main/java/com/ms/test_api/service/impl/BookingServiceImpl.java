@@ -3,6 +3,9 @@ package com.ms.test_api.service.impl;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -37,10 +40,18 @@ public class BookingServiceImpl implements BookingService{
     private final UserReponsitory userReponsitory;
 
     @Override
-    public List<BookingDTO> getAllBookings() {
-        List<Booking> bookings = bookingRepository.findAll();
-        return bookings.stream()
-            .map(b -> new BookingDTO(
+    public Page<BookingDTO> getAllBookings(int page, int size, int user_id) {
+        
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Booking> pageBooking;
+        
+        if(user_id == 0){
+            pageBooking = bookingRepository.findAll(pageable);
+        } else {
+            pageBooking = bookingRepository.findByUser_UserId(user_id, pageable);
+        }
+        return pageBooking.map(b -> new BookingDTO(
                 b.getBookingId(),
                 new UserDTO(
                     b.getUser().getUserId(),
@@ -66,7 +77,7 @@ public class BookingServiceImpl implements BookingService{
                 b.getEndTime(),
                 b.getBookingDate(),
                 b.isStatus()
-            )).collect(Collectors.toList());
+            ));
     }
 
     @Override

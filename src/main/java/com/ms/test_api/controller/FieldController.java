@@ -43,7 +43,7 @@ public class FieldController {
             return new ResponseEntity(response, HttpStatus.OK);
         } catch (Exception e) {
             // TODO: handle exception
-            ApiResponse<List<FieldDTO>> response = new ApiResponse<>(
+            ApiResponse<Page<FieldDTO>> response = new ApiResponse<>(
                 "Failed to retrieve field data",
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 null
