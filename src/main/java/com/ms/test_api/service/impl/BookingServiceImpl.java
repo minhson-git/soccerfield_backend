@@ -159,9 +159,9 @@ public class BookingServiceImpl implements BookingService{
             booking.setBookingId(booking.getBookingId());
             booking.setUser(booking.getUser());
             booking.setField(booking.getField());
-            booking.setStartTime(bookingDetails.getStartTime());
-            booking.setEndTime(bookingDetails.getEndTime());
-            booking.setBookingDate(bookingDetails.getBookingDate());
+            booking.setStartTime(booking.getStartTime());
+            booking.setEndTime(booking.getEndTime());
+            booking.setBookingDate(booking.getBookingDate());
             booking.setStatus(bookingDetails.isStatus());
 
             bookingRepository.save(booking);
