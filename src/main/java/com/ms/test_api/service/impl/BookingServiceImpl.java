@@ -155,18 +155,21 @@ public class BookingServiceImpl implements BookingService{
         try {
             Booking booking = bookingRepository.findById(id)
                 .orElseThrow(()-> new BookingNotFoundException("Booking not exist with id: "+id));
-
+            
+            Field fieldType = fieldRepository.findByFieldId(bookingDetails.getField().getFieldId()).orElseThrow(() -> new FieldNotFoundException("Field not found"));
+            
             booking.setBookingId(booking.getBookingId());
             booking.setUser(booking.getUser());
-            booking.setField(booking.getField());
+            booking.setField(new Field(fieldType.getFieldId(), fieldType.getFieldType(), fieldType.getPricePerHour(), fieldType.isStatus(), fieldType.getBranch()));
             booking.setStartTime(booking.getStartTime());
             booking.setEndTime(booking.getEndTime());
             booking.setBookingDate(booking.getBookingDate());
             booking.setStatus(bookingDetails.isStatus());
-
+            
             bookingRepository.save(booking);
-
+            
             Field field = fieldRepository.findByFieldId(booking.getField().getFieldId()).orElseThrow(() -> new FieldNotFoundException("Field not found"));
+
 
             if(booking.isStatus() == false) {
                 field.setStatus(true);

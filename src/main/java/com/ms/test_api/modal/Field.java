@@ -14,9 +14,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@NoArgsConstructor
 @Table(name = "field")
 public class Field {
 
@@ -36,6 +38,14 @@ public class Field {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")
     private Branch branch;
+
+    public Field(int fieldId, String fieldType, double pricePerHour, boolean status, Branch branch) {
+        this.fieldId = fieldId;
+        this.fieldType = fieldType;
+        this.pricePerHour = pricePerHour;
+        this.status = status;
+        this.branch = branch;
+    }
 
     @OneToMany(mappedBy = "field", cascade = CascadeType.MERGE)
     private List<Booking> bookings;
