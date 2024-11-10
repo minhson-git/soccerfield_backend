@@ -57,8 +57,8 @@ public class BookingServiceImpl implements BookingService{
                     b.getUser().getCitizenId(),
                     b.getUser().getUsername(),
                     b.getUser().getEmail(),
-                    b.getUser().getPhone(),
                     b.getUser().getFullname(), 
+                    b.getUser().getPhone(),
                     new RoleDTO(
                         b.getUser().getRole().getId(), 
                         b.getUser().getRole().getName())),

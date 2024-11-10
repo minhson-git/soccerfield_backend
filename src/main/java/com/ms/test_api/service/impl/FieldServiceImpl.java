@@ -3,6 +3,7 @@ package com.ms.test_api.service.impl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.FieldDTO;
 import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.dto.specification.FieldSpecification;
 import com.ms.test_api.exception.BranchNotFoundException;
 import com.ms.test_api.exception.FieldNotFoundException;
 import com.ms.test_api.modal.Branch;
@@ -29,16 +31,13 @@ public class FieldServiceImpl implements FieldService{
     private final BranchReponsitory branchReponsitory;
 
     @Override
-    public Page<FieldDTO> getAllFields(int page, int size, String branchName) {
+    public Page<FieldDTO> getAllFields(int page, int size, String branchName, String fieldType, Boolean status) {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Field> fieldPage;
-        if(branchName.isEmpty()){
-            fieldPage = fieldRepository.findAll(pageable);
-        } else {
-            fieldPage = fieldRepository.findByBranch_BranchNameContainingIgnoreCase(branchName, pageable);
-        }
+        Specification<Field> spec = FieldSpecification.filterFields(branchName, fieldType, status);
+        
+        Page<Field> fieldPage = fieldRepository.findAll(spec, pageable);
 
         return fieldPage.map(field -> new FieldDTO(
                             field.getFieldId(),

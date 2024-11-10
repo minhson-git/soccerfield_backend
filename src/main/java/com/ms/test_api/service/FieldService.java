@@ -11,7 +11,7 @@ import com.ms.test_api.modal.Field;
 
 public interface FieldService {
 
-    Page<FieldDTO> getAllFields(int page, int size, String branchName);
+    Page<FieldDTO> getAllFields(int page, int size, String branchName, String fieldType, Boolean status);
 
     Field addField(Field field);
 

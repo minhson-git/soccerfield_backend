@@ -32,9 +32,11 @@ public class FieldController {
     @GetMapping
     public ResponseEntity<Page<FieldDTO>> getAllFields(@RequestParam(required = false, defaultValue = "0") int page, 
             @RequestParam(required = false, defaultValue = "10") int size,
-            @RequestParam(required = false, defaultValue = "") String branchName) {
+            @RequestParam(required = false, defaultValue = "") String branchName,
+            @RequestParam(required = false, defaultValue = "") String fieldType,
+            @RequestParam(required = false, defaultValue = "") Boolean status) {
         try {
-            Page<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields(page, size, branchName);
+            Page<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields(page, size, branchName, fieldType, status);
             ApiResponse<Page<FieldDTO>> response = new ApiResponse<>(
                 "Successfully retrieved field data",
                 HttpStatus.OK.value(),
