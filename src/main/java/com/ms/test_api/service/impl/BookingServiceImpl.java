@@ -40,16 +40,20 @@ public class BookingServiceImpl implements BookingService{
     private final UserReponsitory userReponsitory;
 
     @Override
-    public Page<BookingDTO> getAllBookings(int page, int size, int user_id) {
+    public Page<BookingDTO> getAllBookings(int page, int size, int userId, String branchName) {
         
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Booking> pageBooking;
         
-        if(user_id == 0){
-            pageBooking = bookingRepository.findAll(pageable);
+        if (userId != 0 && branchName != null && !branchName.isEmpty()) {
+            pageBooking = bookingRepository.findByUser_UserIdAndField_Branch_BranchNameContainingIgnoreCase(userId, branchName, pageable);
+        } else if (userId != 0) {
+            pageBooking = bookingRepository.findByUser_UserId(userId, pageable);
+        } else if (branchName != null && !branchName.isEmpty()) {
+            pageBooking = bookingRepository.findByField_Branch_BranchNameContainingIgnoreCase(branchName, pageable);
         } else {
-            pageBooking = bookingRepository.findByUser_UserId(user_id, pageable);
+            pageBooking = bookingRepository.findAll(pageable);
         }
         return pageBooking.map(b -> new BookingDTO(
                 b.getBookingId(),

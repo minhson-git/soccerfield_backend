@@ -10,7 +10,7 @@ import com.ms.test_api.modal.Booking;
 
 public interface BookingService {
 
-    Page<BookingDTO> getAllBookings(int page, int size, int user_id);
+    Page<BookingDTO> getAllBookings(int page, int size, int userId, String branchName);
 
     Booking addBooking(Booking booking);
 

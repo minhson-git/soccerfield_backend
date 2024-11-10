@@ -34,9 +34,10 @@ public class BookingControlller {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BookingDTO>>> getAllBookings(@RequestParam(required = false, defaultValue = "0") int page,
              @RequestParam(required = false, defaultValue = "5") int size, 
-             @RequestParam(required = false, defaultValue = "0") int userId){
+             @RequestParam(required = false, defaultValue = "0") Integer userId,
+             @RequestParam(required = false) String branchName){
         try {
-            Page<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings(page, size, userId);
+            Page<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings(page, size, userId, branchName);
             ApiResponse<Page<BookingDTO>> response = new ApiResponse<>(
                 "Successfully retrieved booking data",
                 HttpStatus.OK.value(),
