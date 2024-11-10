@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import com.ms.test_api.dto.FieldDTO;
 import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.dto.specification.BookingSpecification;
 import com.ms.test_api.exception.BookingNotFoundException;
 import com.ms.test_api.exception.FieldNotFoundException;
 import com.ms.test_api.exception.UserNotFoundException;
@@ -40,21 +42,14 @@ public class BookingServiceImpl implements BookingService{
     private final UserReponsitory userReponsitory;
 
     @Override
-    public Page<BookingDTO> getAllBookings(int page, int size, int userId, String branchName) {
+    public Page<BookingDTO> getAllBookings(int page, int size, int userId, String branchName, String username, Boolean status) {
         
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Booking> pageBooking;
-        
-        if (userId != 0 && branchName != null && !branchName.isEmpty()) {
-            pageBooking = bookingRepository.findByUser_UserIdAndField_Branch_BranchNameContainingIgnoreCase(userId, branchName, pageable);
-        } else if (userId != 0) {
-            pageBooking = bookingRepository.findByUser_UserId(userId, pageable);
-        } else if (branchName != null && !branchName.isEmpty()) {
-            pageBooking = bookingRepository.findByField_Branch_BranchNameContainingIgnoreCase(branchName, pageable);
-        } else {
-            pageBooking = bookingRepository.findAll(pageable);
-        }
+        Specification<Booking> spec = BookingSpecification.filterBookings(userId, branchName, username, status);
+
+        Page<Booking> pageBooking = bookingRepository.findAll(spec, pageable);
+    
         return pageBooking.map(b -> new BookingDTO(
                 b.getBookingId(),
                 new UserDTO(

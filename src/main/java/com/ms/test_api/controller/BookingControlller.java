@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
@@ -33,11 +32,13 @@ public class BookingControlller {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BookingDTO>>> getAllBookings(@RequestParam(required = false, defaultValue = "0") int page,
-             @RequestParam(required = false, defaultValue = "5") int size, 
-             @RequestParam(required = false, defaultValue = "0") Integer userId,
-             @RequestParam(required = false) String branchName){
+                            @RequestParam(required = false, defaultValue = "10") int size,
+                            @RequestParam(required = false, defaultValue = "0") Integer userId,
+                            @RequestParam(required = false, defaultValue = "") String branchName,
+                            @RequestParam(required = false, defaultValue = "") String username,
+                            @RequestParam(required = false, defaultValue = "") Boolean status){
         try {
-            Page<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings(page, size, userId, branchName);
+            Page<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings(page, size, userId, branchName, username, status);
             ApiResponse<Page<BookingDTO>> response = new ApiResponse<>(
                 "Successfully retrieved booking data",
                 HttpStatus.OK.value(),
