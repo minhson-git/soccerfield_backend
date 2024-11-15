@@ -127,7 +127,8 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public ResponseEntity<ApiResponse<UserSoccerField>> updateUserByUsername(int id, UserSoccerField userDetail) {
+    public ResponseEntity<ApiResponse<UserDTO>> updateUserByUsername(int id, UserSoccerField userDetail) {
+        
         try {
             UserSoccerField user = userReponsitory.findById(id).orElseThrow(() -> new UserNotFoundException("User not exist with id: " + id));
     
@@ -144,14 +145,23 @@ public class UserServiceImpl implements UserService{
             
             userReponsitory.save(user);
 
-            ApiResponse<UserSoccerField> response = new ApiResponse<UserSoccerField>(
+            UserDTO userDTOs = new UserDTO(
+                user.getUserId(),
+                user.getCitizenId(), 
+                user.getUsername(), 
+                user.getEmail(), 
+                user.getFullname(), 
+                user.getPhone(), 
+                new RoleDTO(user.getRole().getId(), user.getRole().getName()));
+
+            ApiResponse<UserDTO> response = new ApiResponse<UserDTO>(
                 "Updated successfully user", 
                 HttpStatus.OK.value(), 
-                null
+                userDTOs
             );
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-            ApiResponse<UserSoccerField> response = new ApiResponse<UserSoccerField>(
+            ApiResponse<UserDTO> response = new ApiResponse<UserDTO>(
                 "Failed retrieved user data", 
                 HttpStatus.INTERNAL_SERVER_ERROR.value(), 
                 null

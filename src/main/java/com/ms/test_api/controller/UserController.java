@@ -67,7 +67,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserSoccerField>> updateUser(@PathVariable int id, @RequestBody UserSoccerField user){
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable int id, @RequestBody UserSoccerField user){
         return userServiceImpl.updateUserByUsername(id, user);
     }
 

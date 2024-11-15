@@ -20,7 +20,7 @@ public interface UserService {
 
     ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(String username);
 
-    ResponseEntity<ApiResponse<UserSoccerField>> updateUserByUsername(int id, UserSoccerField user);
+    ResponseEntity<ApiResponse<UserDTO>> updateUserByUsername(int id, UserSoccerField user);
 
     ResponseEntity<?> deleteUser(int id);
 
