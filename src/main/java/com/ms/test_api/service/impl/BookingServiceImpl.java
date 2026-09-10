@@ -6,6 +6,7 @@ import java.time.Duration;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,7 +91,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = findBooking(id);
 
         if (!booking.getUser().getUsername().equals(username)) {
-            throw new BadRequestException("You can only cancel your own booking");
+            throw new AccessDeniedException("You can only cancel your own booking");
         }
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new BadRequestException("Booking is already cancelled");

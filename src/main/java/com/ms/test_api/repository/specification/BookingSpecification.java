@@ -23,7 +23,7 @@ public final class BookingSpecification {
                 predicates.add(cb.equal(root.get("user").get("id"), filter.userId()));
             }
             if (StringUtils.hasText(filter.username())) {
-                predicates.add(cb.like(root.get("user").get("username"), "%" + filter.username() + "%"));
+                predicates.add(cb.equal(root.get("user").get("username"), filter.username()));
             }
             if (StringUtils.hasText(filter.branchName())) {
                 predicates.add(cb.like(root.get("field").get("branch").get("name"), "%" + filter.branchName() + "%"));
