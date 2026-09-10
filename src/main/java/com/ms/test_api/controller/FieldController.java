@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.FieldDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.modal.Field;
+import com.ms.test_api.entity.Field;
 import com.ms.test_api.service.impl.FieldServiceImpl;
 
 import lombok.RequiredArgsConstructor;

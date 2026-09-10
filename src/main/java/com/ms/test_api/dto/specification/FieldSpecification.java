@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ms.test_api.modal.Field;
+import com.ms.test_api.entity.Field;
 
 import jakarta.persistence.criteria.Predicate;
 

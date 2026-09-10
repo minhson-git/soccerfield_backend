@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import com.ms.test_api.modal.Booking;
+import com.ms.test_api.entity.Booking;
 
 import jakarta.persistence.criteria.Predicate;
 

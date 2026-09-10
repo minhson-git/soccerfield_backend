@@ -1,4 +1,4 @@
-package com.ms.test_api.modal;
+package com.ms.test_api.entity;
 
 import java.util.List;
 

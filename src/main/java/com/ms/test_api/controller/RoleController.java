@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.modal.Role;
+import com.ms.test_api.entity.Role;
 import com.ms.test_api.service.impl.RoleServiceImpl;
 
 import lombok.RequiredArgsConstructor;

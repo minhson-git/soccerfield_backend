@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 
 import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.modal.Role;
-import com.ms.test_api.reponsitory.RoleRepository;
+import com.ms.test_api.entity.Role;
+import com.ms.test_api.repository.RoleRepository;
 import com.ms.test_api.service.RoleService;
 
 import lombok.RequiredArgsConstructor;

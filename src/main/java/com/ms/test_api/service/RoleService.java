@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.modal.Role;
+import com.ms.test_api.entity.Role;
 
 public interface RoleService {
 

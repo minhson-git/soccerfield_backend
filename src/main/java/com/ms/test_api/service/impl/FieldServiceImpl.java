@@ -12,12 +12,12 @@ import com.ms.test_api.dto.BranchDTO;
 import com.ms.test_api.dto.FieldDTO;
 import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.dto.specification.FieldSpecification;
+import com.ms.test_api.entity.Branch;
+import com.ms.test_api.entity.Field;
 import com.ms.test_api.exception.BranchNotFoundException;
 import com.ms.test_api.exception.FieldNotFoundException;
-import com.ms.test_api.modal.Branch;
-import com.ms.test_api.modal.Field;
-import com.ms.test_api.reponsitory.BranchReponsitory;
-import com.ms.test_api.reponsitory.FieldRepository;
+import com.ms.test_api.repository.BranchReponsitory;
+import com.ms.test_api.repository.FieldRepository;
 import com.ms.test_api.service.FieldService;
 
 import lombok.RequiredArgsConstructor;

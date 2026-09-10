@@ -14,11 +14,11 @@ import com.ms.test_api.dto.RoleDTO;
 import com.ms.test_api.dto.UserDTO;
 import com.ms.test_api.dto.request.UserCreationRequest;
 import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.entity.Role;
+import com.ms.test_api.entity.UserSoccerField;
 import com.ms.test_api.exception.UserNotFoundException;
-import com.ms.test_api.modal.Role;
-import com.ms.test_api.modal.UserSoccerField;
-import com.ms.test_api.reponsitory.RoleRepository;
-import com.ms.test_api.reponsitory.UserReponsitory;
+import com.ms.test_api.repository.RoleRepository;
+import com.ms.test_api.repository.UserReponsitory;
 import com.ms.test_api.service.UserService;
 
 import lombok.RequiredArgsConstructor;
