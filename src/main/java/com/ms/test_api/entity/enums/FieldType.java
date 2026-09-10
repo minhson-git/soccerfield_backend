@@ -1,4 +1,4 @@
-package com.ms.test_api.entity.enumEntity;
+package com.ms.test_api.entity.enums;
 
 public enum FieldType {
     FIVE_A_SIDE,

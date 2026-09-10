@@ -5,8 +5,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ms.test_api.entity.enumEntity.FieldStatus;
-import com.ms.test_api.entity.enumEntity.FieldType;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import com.ms.test_api.entity.enums.FieldStatus;
+import com.ms.test_api.entity.enums.FieldType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -49,9 +52,11 @@ public class Field {
     @Column(nullable = false, length = 20)
     FieldStatus status = FieldStatus.ACTIVE;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 

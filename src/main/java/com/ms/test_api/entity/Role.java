@@ -3,7 +3,7 @@ package com.ms.test_api.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ms.test_api.entity.enumEntity.RoleName;
+import com.ms.test_api.entity.enums.RoleName;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,5 +34,5 @@ public class Role {
     RoleName name;
 
     @OneToMany(mappedBy = "role")
-    private List<User> users = new ArrayList<>();
+    List<User> users = new ArrayList<>();
 }
