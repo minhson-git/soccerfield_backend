@@ -1,13 +1,12 @@
 package com.ms.test_api.dto.request;
 
-import java.io.Serializable;
+import jakarta.validation.constraints.NotBlank;
 
-import lombok.Getter;
+public record SignInRequest(
 
-@Getter
-public class SignInRequest implements Serializable {
-    
-    private String username;
+        @NotBlank(message = "Username is required")
+        String username,
 
-    private String password;
-}
+        @NotBlank(message = "Password is required")
+        String password
+) {}
