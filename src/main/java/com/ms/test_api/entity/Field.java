@@ -1,10 +1,17 @@
 package com.ms.test_api.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
+import com.ms.test_api.entity.enumEntity.FieldStatus;
+import com.ms.test_api.entity.enumEntity.FieldType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,42 +20,52 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Entity
-@Data
+@Table(name = "fields")
+@Getter
+@Setter
 @NoArgsConstructor
-@Table(name = "field")
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Field {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "field_id")
-    private int fieldId;
+    Long id;
 
-    @Column(name = "field_type")
-    private String fieldType;
-    
-    @Column(name = "price_per_hour")
-    private double pricePerHour;
-    
-    private boolean status;
-    
+    @Column(nullable = false, length = 100)
+    String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "field_type", nullable = false, length = 20)
+    FieldType fieldType;
+
+    @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
+    BigDecimal basePrice;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    FieldStatus status = FieldStatus.ACTIVE;
+
+    @Column(name = "created_at", nullable = false)
+    LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    LocalDateTime updatedAt;
+
+    // =========================
+    // Relationships
+    // =========================
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id")
-    private Branch branch;
+    @JoinColumn(name = "branch_id", nullable = false)
+    Branch branch;
 
-    public Field(int fieldId, String fieldType, double pricePerHour, boolean status, Branch branch) {
-        this.fieldId = fieldId;
-        this.fieldType = fieldType;
-        this.pricePerHour = pricePerHour;
-        this.status = status;
-        this.branch = branch;
-    }
+    @OneToMany(mappedBy = "field")
+    List<Booking> bookings = new ArrayList<>();
 
-    @OneToMany(mappedBy = "field", cascade = CascadeType.MERGE)
-    private List<Booking> bookings;
-
-    
+    @OneToMany(mappedBy = "field")
+    List<PricingRule> pricingRules = new ArrayList<>();
 }

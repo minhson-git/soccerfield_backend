@@ -1,13 +1,10 @@
 package com.ms.test_api.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-import com.ms.test_api.entity.enumEntity.BookingStatus;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -19,26 +16,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
+@Table(name = "pricing_rules")
 @Getter
 @Setter
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "bookings")
-public class Booking {
+public class PricingRule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
-    // =========================
-    // Booking information
-    // =========================
 
-    @Column(name = "booking_date", nullable = false)
-    LocalDate bookingDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "day_of_week", nullable = false, length = 10)
+    DayOfWeek dayOfWeek;
 
     @Column(name = "start_time", nullable = false)
     LocalTime startTime;
@@ -46,12 +42,8 @@ public class Booking {
     @Column(name = "end_time", nullable = false)
     LocalTime endTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    BookingStatus status;
-
-    @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
-    BigDecimal totalPrice;
+    @Column(nullable = false, precision = 12, scale = 2)
+    BigDecimal price;
 
     @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
@@ -60,11 +52,8 @@ public class Booking {
     LocalDateTime updatedAt;
 
     // =========================
-    // Relationships
+    // Relationship
     // =========================
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_id", nullable = false)

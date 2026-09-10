@@ -1,32 +1,38 @@
 package com.ms.test_api.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
+import com.ms.test_api.entity.enumEntity.RoleName;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Entity
-@Data
-@Table(name = "role")
+@Table(name = "roles")
+@Getter
+@Setter
+@NoArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "role_id")
-    private int id;
+    Long id;
 
-    @Column(name = "role_name")
-    private String name;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, unique = true, length = 20)
+    RoleName name;
 
-    @OneToMany(mappedBy = "role", cascade = {CascadeType.MERGE, CascadeType.PERSIST})
-    private List<UserSoccerField> users;
-
-
+    @OneToMany(mappedBy = "role")
+    private List<User> users = new ArrayList<>();
 }
