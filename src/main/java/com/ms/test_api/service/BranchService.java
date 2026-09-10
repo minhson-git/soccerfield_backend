@@ -2,22 +2,18 @@ package com.ms.test_api.service;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
-
-import com.ms.test_api.dto.BranchDTO;
-import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.entity.Branch;
+import com.ms.test_api.dto.request.BranchRequest;
+import com.ms.test_api.dto.response.BranchResponse;
 
 public interface BranchService {
 
-    List<BranchDTO> getAllBranchs();
+    List<BranchResponse> getAllBranches();
 
-    Branch addBranch(Branch branch);
+    BranchResponse getBranchById(Long id);
 
-    ResponseEntity<ApiResponse<BranchDTO>> getBranchById(int id);
+    BranchResponse createBranch(BranchRequest request);
 
-    ResponseEntity<ApiResponse<BranchDTO>> updateBranch(int id, Branch branch);
+    BranchResponse updateBranch(Long id, BranchRequest request);
 
-    boolean deleteBranch(int id);
-
+    void deleteBranch(Long id);
 }

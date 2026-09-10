@@ -1,220 +1,126 @@
 package com.ms.test_api.service.impl;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.ms.test_api.dto.BookingDTO;
-import com.ms.test_api.dto.BranchDTO;
-import com.ms.test_api.dto.FieldDTO;
-import com.ms.test_api.dto.RoleDTO;
-import com.ms.test_api.dto.UserDTO;
-import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.dto.specification.BookingSpecification;
+import com.ms.test_api.dto.request.BookingRequest;
+import com.ms.test_api.dto.response.BookingResponse;
 import com.ms.test_api.entity.Booking;
 import com.ms.test_api.entity.Field;
-import com.ms.test_api.entity.UserSoccerField;
-import com.ms.test_api.exception.BookingNotFoundException;
-import com.ms.test_api.exception.FieldNotFoundException;
-import com.ms.test_api.exception.UserNotFoundException;
+import com.ms.test_api.entity.User;
+import com.ms.test_api.entity.enums.BookingStatus;
+import com.ms.test_api.entity.enums.FieldStatus;
+import com.ms.test_api.exception.BadRequestException;
+import com.ms.test_api.exception.ResourceNotFoundException;
+import com.ms.test_api.mapper.BookingMapper;
 import com.ms.test_api.repository.BookingRepository;
 import com.ms.test_api.repository.FieldRepository;
-import com.ms.test_api.repository.UserReponsitory;
+import com.ms.test_api.repository.UserRepository;
+import com.ms.test_api.repository.specification.BookingFilter;
+import com.ms.test_api.repository.specification.BookingSpecification;
 import com.ms.test_api.service.BookingService;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class BookingServiceImpl implements BookingService{
+public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
-
     private final FieldRepository fieldRepository;
-
-    private final UserReponsitory userReponsitory;
+    private final UserRepository userRepository;
+    private final BookingMapper bookingMapper;
 
     @Override
-    public Page<BookingDTO> getAllBookings(int page, int size, int userId, String branchName, String username, Boolean status) {
-        
-        Pageable pageable = PageRequest.of(page, size);
-
-        Specification<Booking> spec = BookingSpecification.filterBookings(userId, branchName, username, status);
-
-        Page<Booking> pageBooking = bookingRepository.findAll(spec, pageable);
-    
-        return pageBooking.map(b -> new BookingDTO(
-                b.getBookingId(),
-                new UserDTO(
-                    b.getUser().getUserId(),
-                    b.getUser().getCitizenId(),
-                    b.getUser().getUsername(),
-                    b.getUser().getEmail(),
-                    b.getUser().getFullname(), 
-                    b.getUser().getPhone(),
-                    new RoleDTO(
-                        b.getUser().getRole().getId(), 
-                        b.getUser().getRole().getName())),
-                new FieldDTO(
-                    b.getField().getFieldId(), 
-                    b.getField().getFieldType(),
-                    b.getField().getPricePerHour(),
-                    b.getField().isStatus(),
-                    new BranchDTO(
-                        b.getField().getBranch().getBranchId(), 
-                        b.getField().getBranch().getBranchName(), 
-                        b.getField().getBranch().getAddress(), 
-                        b.getField().getBranch().getPhone())),
-                b.getStartTime(),
-                b.getEndTime(),
-                b.getBookingDate(),
-                b.isStatus()
-            ));
+    @Transactional(readOnly = true)
+    public Page<BookingResponse> searchBookings(BookingFilter filter, Pageable pageable) {
+        return bookingRepository.findAll(BookingSpecification.filter(filter), pageable)
+                .map(bookingMapper::toResponse);
     }
 
     @Override
-    public Booking addBooking(Booking booking) {
+    @Transactional(readOnly = true)
+    public BookingResponse getBookingById(Long id) {
+        return bookingMapper.toResponse(findBooking(id));
+    }
 
-        UserSoccerField user = userReponsitory.findById(booking.getUser().getUserId()).orElseThrow(()-> new UserNotFoundException("User not found"));
+    @Override
+    @Transactional
+    public BookingResponse createBooking(BookingRequest request, String username) {
 
-        Field hasBooking = fieldRepository.findByFieldId(booking.getField().getFieldId()).orElseThrow(()-> new FieldNotFoundException("Field not exist"));
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
-        if (hasBooking.isStatus() == true){
-            throw new RuntimeException("Field has been booked");
+        Field field = fieldRepository.findById(request.fieldId())
+                .orElseThrow(() -> new ResourceNotFoundException("Field not found with id: " + request.fieldId()));
+
+        if (field.getStatus() != FieldStatus.ACTIVE) {
+            throw new BadRequestException("Field is not available for booking");
         }
 
-        if(hasBooking != null){
-            hasBooking.setStatus(true);
+        if (!request.endTime().isAfter(request.startTime())) {
+            throw new BadRequestException("End time must be after start time");
         }
 
-        fieldRepository.save(hasBooking);
+        // TODO (Week 2 - Day 9): kiểm tra khung giờ nằm trong opening/closing time của branch
+        // TODO (Week 2 - Day 10): overlap detection + @Lock(PESSIMISTIC_WRITE) chống double booking
+        // TODO (Week 2 - Day 11): tính giá theo PricingRule thay vì basePrice
 
+        Booking booking = new Booking();
         booking.setUser(user);
+        booking.setField(field);
+        booking.setBookingDate(request.bookingDate());
+        booking.setStartTime(request.startTime());
+        booking.setEndTime(request.endTime());
+        booking.setStatus(BookingStatus.PENDING);
+        booking.setTotalPrice(calculateTemporaryPrice(field, request));
 
-        return bookingRepository.save(booking);
+        return bookingMapper.toResponse(bookingRepository.save(booking));
     }
 
     @Override
-    public ResponseEntity<ApiResponse<BookingDTO>> getBookingById(Long id) {
-        try {
-            Booking booking = bookingRepository.findById(id).orElseThrow(() -> new BookingNotFoundException("Booking not exist with id: "+id));
-            BookingDTO bookingDTO = new BookingDTO(
-                booking.getBookingId(),
-                    new UserDTO(
-                        booking.getUser().getUserId(),
-                        booking.getUser().getCitizenId(),
-                        booking.getUser().getFullname(),
-                        booking.getUser().getUsername(),
-                        booking.getUser().getEmail(),
-                        booking.getUser().getPhone(),
-                        new RoleDTO(
-                            booking.getUser().getRole().getId(), 
-                            booking.getUser().getRole().getName())),
-                    new FieldDTO(
-                        booking.getField().getFieldId(), 
-                        booking.getField().getFieldType(),
-                        booking.getField().getPricePerHour(),
-                        booking.getField().isStatus(),
-                        new BranchDTO(
-                            booking.getField().getBranch().getBranchId(), 
-                            booking.getField().getBranch().getBranchName(), 
-                            booking.getField().getBranch().getAddress(), 
-                            booking.getField().getBranch().getPhone())),
-                booking.getStartTime(),
-                booking.getEndTime(),
-                booking.getBookingDate(),
-                booking.isStatus());
-            
-            ApiResponse<BookingDTO> response = new ApiResponse<BookingDTO>(
-                "Successfully retrieved booking data", 
-                HttpStatus.OK.value(), 
-                bookingDTO
-            );
-            return new ResponseEntity<ApiResponse<BookingDTO>>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<BookingDTO> response = new ApiResponse<BookingDTO>(
-                "Failed retrieved booking data", 
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
-                null
-            );
-            return new ResponseEntity<ApiResponse<BookingDTO>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    @Transactional
+    public BookingResponse cancelBooking(Long id, String username) {
+        Booking booking = findBooking(id);
+
+        if (!booking.getUser().getUsername().equals(username)) {
+            throw new BadRequestException("You can only cancel your own booking");
         }
-        
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new BadRequestException("Booking is already cancelled");
+        }
+        if (booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new BadRequestException("Completed booking cannot be cancelled");
+        }
+
+        // TODO (Week 2 - Day 12): áp dụng chính sách huỷ (hạn chót trước giờ đá)
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        return bookingMapper.toResponse(bookingRepository.save(booking));
     }
 
     @Override
-    public ResponseEntity<ApiResponse<Booking>> updateBooking(Long id, Booking bookingDetails) {
-        try {
-            Booking booking = bookingRepository.findById(id)
-                .orElseThrow(()-> new BookingNotFoundException("Booking not exist with id: "+id));
-            
-            Field fieldType = fieldRepository.findByFieldId(bookingDetails.getField().getFieldId()).orElseThrow(() -> new FieldNotFoundException("Field not found"));
-            
-            booking.setBookingId(booking.getBookingId());
-            booking.setUser(booking.getUser());
-            booking.setField(new Field(fieldType.getFieldId(), fieldType.getFieldType(), fieldType.getPricePerHour(), fieldType.isStatus(), fieldType.getBranch()));
-            booking.setStartTime(booking.getStartTime());
-            booking.setEndTime(booking.getEndTime());
-            booking.setBookingDate(booking.getBookingDate());
-            booking.setStatus(bookingDetails.isStatus());
-            
-            bookingRepository.save(booking);
-            
-            Field field = fieldRepository.findByFieldId(booking.getField().getFieldId()).orElseThrow(() -> new FieldNotFoundException("Field not found"));
-
-
-            if(booking.isStatus() == false) {
-                field.setStatus(true);
-            } else {
-                field.setStatus(false);
-            }
-
-            fieldRepository.save(field);
-
-            ApiResponse<Booking> response = new ApiResponse<Booking>(
-                "Updated successfully booking", 
-                HttpStatus.OK.value(),
-                null
-            );
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<Booking> response = new ApiResponse<Booking>(
-                "Failed to update booking", 
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
-                null
-            );
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+    @Transactional
+    public void deleteBooking(Long id) {
+        bookingRepository.delete(findBooking(id));
     }
 
-    @Override
-    public ResponseEntity<?> deleteBooking(Long id) {
-        try {
-            Booking booking = bookingRepository.findById(id).orElseThrow(()-> new BookingNotFoundException("Booking not exist with id: "+id));
-            bookingRepository.delete(booking);
-            ApiResponse<String> response = new ApiResponse<String>(
-                "Deleted successfully booking", 
-                HttpStatus.OK.value(), 
-                null
-            );
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<String> response = new ApiResponse<String>(
-                "Failed to delete booking", 
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), 
-                null
-            );
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
+    private Booking findBooking(Long id) {
+        return bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
     }
 
+    /** Tạm tính theo basePrice — sẽ được PricingService thay thế ở Day 11. */
+    private BigDecimal calculateTemporaryPrice(Field field, BookingRequest request) {
+        long minutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
+        BigDecimal hours = BigDecimal.valueOf(minutes)
+                .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
+        return field.getBasePrice().multiply(hours).setScale(2, RoundingMode.HALF_UP);
+    }
 }

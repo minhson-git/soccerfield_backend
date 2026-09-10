@@ -1,23 +1,21 @@
 package com.ms.test_api.service;
 
-
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
 
-import com.ms.test_api.dto.BookingDTO;
-import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.entity.Booking;
+import com.ms.test_api.dto.request.BookingRequest;
+import com.ms.test_api.dto.response.BookingResponse;
+import com.ms.test_api.repository.specification.BookingFilter;
 
 public interface BookingService {
 
-    Page<BookingDTO> getAllBookings(int page, int size, int userId, String branchName, String username, Boolean status);
+    Page<BookingResponse> searchBookings(BookingFilter filter, Pageable pageable);
 
-    Booking addBooking(Booking booking);
+    BookingResponse getBookingById(Long id);
 
-    ResponseEntity<ApiResponse<BookingDTO>> getBookingById(Long id);
+    BookingResponse createBooking(BookingRequest request, String username);
 
-    ResponseEntity<ApiResponse<Booking>> updateBooking(Long id, Booking booking);
+    BookingResponse cancelBooking(Long id, String username);
 
-    ResponseEntity<?> deleteBooking(Long id);
-
+    void deleteBooking(Long id);
 }

@@ -1,24 +1,21 @@
 package com.ms.test_api.service;
 
-
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Pageable;
 
-import com.ms.test_api.dto.FieldDTO;
-import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.entity.Field;
-
+import com.ms.test_api.dto.request.FieldRequest;
+import com.ms.test_api.dto.response.FieldResponse;
+import com.ms.test_api.repository.specification.FieldFilter;
 
 public interface FieldService {
 
-    Page<FieldDTO> getAllFields(int page, int size, String branchName, String fieldType, Boolean status);
+    Page<FieldResponse> searchFields(FieldFilter filter, Pageable pageable);
 
-    Field addField(Field field);
+    FieldResponse getFieldById(Long id);
 
-    ResponseEntity<ApiResponse<FieldDTO>> getFieldById(int id);
+    FieldResponse createField(FieldRequest request);
 
-    ResponseEntity<ApiResponse<Field>> updateFieldById(int id, Field field);
+    FieldResponse updateField(Long id, FieldRequest request);
 
-    ResponseEntity<?> deleteField(int id);
-
+    void deleteField(Long id);
 }
