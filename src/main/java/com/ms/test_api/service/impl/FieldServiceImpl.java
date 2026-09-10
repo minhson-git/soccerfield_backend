@@ -30,7 +30,7 @@ public class FieldServiceImpl implements FieldService {
     @Override
     @Transactional(readOnly = true)
     public Page<FieldResponse> searchFields(FieldFilter filter, Pageable pageable) {
-        return fieldRepository.findAll(FieldFilter.filter(filter), pageable)
+        return fieldRepository.findAll(FieldSpecification.filter(filter), pageable)
                 .map(fieldMapper::toResponse);
     }
 

@@ -1,92 +1,72 @@
 package com.ms.test_api.controller;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-import com.ms.test_api.dto.FieldDTO;
+import com.ms.test_api.dto.request.FieldRequest;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.entity.Field;
-import com.ms.test_api.service.impl.FieldServiceImpl;
+import com.ms.test_api.dto.response.FieldResponse;
+import com.ms.test_api.entity.enums.FieldStatus;
+import com.ms.test_api.entity.enums.FieldType;
+import com.ms.test_api.repository.specification.FieldFilter;
+import com.ms.test_api.service.FieldService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequestMapping("/api/v1/fields")
 @RequiredArgsConstructor
-@RequestMapping("/api/fields")
 public class FieldController {
 
-    private final FieldServiceImpl fieldServiceImpl;
+    private final FieldService fieldService;
 
     @GetMapping
-    public ResponseEntity<Page<FieldDTO>> getAllFields(@RequestParam(required = false, defaultValue = "0") int page, 
-            @RequestParam(required = false, defaultValue = "10") int size,
-            @RequestParam(required = false, defaultValue = "") String branchName,
-            @RequestParam(required = false, defaultValue = "") String fieldType,
-            @RequestParam(required = false, defaultValue = "") Boolean status) {
-        try {
-            Page<FieldDTO> fieldDTOs = fieldServiceImpl.getAllFields(page, size, branchName, fieldType, status);
-            ApiResponse<Page<FieldDTO>> response = new ApiResponse<>(
-                "Successfully retrieved field data",
-                HttpStatus.OK.value(),
-                fieldDTOs
-            );
-            return new ResponseEntity(response, HttpStatus.OK);
-        } catch (Exception e) {
-            // TODO: handle exception
-            ApiResponse<Page<FieldDTO>> response = new ApiResponse<>(
-                "Failed to retrieve field data",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-            );
-            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    public ResponseEntity<ApiResponse<Page<FieldResponse>>> searchFields(
+            @RequestParam(required = false) String branchName,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) FieldType fieldType,
+            @RequestParam(required = false) FieldStatus status,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<Field>> addField(@RequestBody Field field){
-        try {
-            fieldServiceImpl.addField(field);
-            ApiResponse<Field> response = new ApiResponse<Field>(
-                "Field created successfully", 
-                HttpStatus.CREATED.value(), 
-                null
-            ); 
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            ApiResponse<Field> response = new ApiResponse<>(
-                "Failed to create field",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-            );
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        FieldFilter filter = new FieldFilter(branchName, district, fieldType, status, minPrice, maxPrice);
+        return ApiResponse.ok("Fields retrieved successfully", fieldService.searchFields(filter, pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<FieldDTO>> getFieldById(@PathVariable int id){
-        return fieldServiceImpl.getFieldById(id);
+    public ResponseEntity<ApiResponse<FieldResponse>> getField(@PathVariable Long id) {
+        return ApiResponse.ok("Field retrieved successfully", fieldService.getFieldById(id));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    public ResponseEntity<ApiResponse<FieldResponse>> createField(@RequestBody @Valid FieldRequest request) {
+        return ApiResponse.created("Field created successfully", fieldService.createField(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Field>> updateField(@PathVariable int id, @RequestBody Field field){
-        return fieldServiceImpl.updateFieldById(id, field);
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    public ResponseEntity<ApiResponse<FieldResponse>> updateField(
+            @PathVariable Long id,
+            @RequestBody @Valid FieldRequest request) {
+        return ApiResponse.ok("Field updated successfully", fieldService.updateField(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteField(@PathVariable int id){
-        return fieldServiceImpl.deleteField(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteField(@PathVariable Long id) {
+        fieldService.deleteField(id);
+        return ApiResponse.ok("Field deleted successfully", null);
     }
 
+    // TODO (Day 9): GET /{id}/availability?date=yyyy-MM-dd
 }

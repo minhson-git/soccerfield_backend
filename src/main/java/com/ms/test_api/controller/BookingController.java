@@ -1,93 +1,83 @@
 package com.ms.test_api.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ms.test_api.dto.BookingDTO;
-import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.entity.Booking;
-import com.ms.test_api.service.impl.BookingServiceImpl;
-
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import com.ms.test_api.dto.request.BookingRequest;
+import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.dto.response.BookingResponse;
+import com.ms.test_api.entity.enums.BookingStatus;
+import com.ms.test_api.repository.specification.BookingFilter;
+import com.ms.test_api.service.BookingService;
 
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
-@RequestMapping("/api/bookings")
 public class BookingController {
 
-    private final BookingServiceImpl bookingServiceImpl;
+    private final BookingService bookingService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<BookingDTO>>> getAllBookings(@RequestParam(required = false, defaultValue = "0") int page,
-                            @RequestParam(required = false, defaultValue = "10") int size,
-                            @RequestParam(required = false, defaultValue = "0") Integer userId,
-                            @RequestParam(required = false, defaultValue = "") String branchName,
-                            @RequestParam(required = false, defaultValue = "") String username,
-                            @RequestParam(required = false, defaultValue = "") Boolean status){
-        try {
-            Page<BookingDTO> bookingDTOs = bookingServiceImpl.getAllBookings(page, size, userId, branchName, username, status);
-            ApiResponse<Page<BookingDTO>> response = new ApiResponse<>(
-                "Successfully retrieved booking data",
-                HttpStatus.OK.value(),
-                bookingDTOs
-            );
-            return new ResponseEntity(response, HttpStatus.OK);
-        } catch (Exception e) {
-            // TODO: handle exception
-            ApiResponse<Page<BookingDTO>> response = new ApiResponse<>(
-                "Failed to retrieve booking data",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-            );
-            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    public ResponseEntity<ApiResponse<Page<BookingResponse>>> searchBookings(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String branchName,
+            @RequestParam(required = false) BookingStatus status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate bookingDate,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        BookingFilter filter = new BookingFilter(userId, username, branchName, status, bookingDate);
+        return ApiResponse.ok("Bookings retrieved successfully", bookingService.searchBookings(filter, pageable));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<Page<BookingResponse>>> getMyBookings(
+            @AuthenticationPrincipal Jwt jwt,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        BookingFilter filter = new BookingFilter(null, jwt.getSubject(), null, null, null);
+        return ApiResponse.ok("Bookings retrieved successfully", bookingService.searchBookings(filter, pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<BookingResponse>> getBooking(@PathVariable Long id) {
+        return ApiResponse.ok("Booking retrieved successfully", bookingService.getBookingById(id));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Booking>> addBooking(@RequestBody Booking booking){
-        try {
-            bookingServiceImpl.addBooking(booking);
-            ApiResponse<Booking> response = new ApiResponse<Booking>(
-                "Booking created successfully", 
-                HttpStatus.CREATED.value(), 
-                null
-            ); 
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (Exception e) {
-            ApiResponse<Booking> response = new ApiResponse<>(
-                "Failed to create booking",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-            );
-            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<ApiResponse<BookingResponse>> createBooking(
+            @RequestBody @Valid BookingRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.created("Booking created successfully",
+                bookingService.createBooking(request, jwt.getSubject()));
     }
-    
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BookingDTO>> getBookingById(@PathVariable Long id){
-        return bookingServiceImpl.getBookingById(id);
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.ok("Booking cancelled successfully",
+                bookingService.cancelBooking(id, jwt.getSubject()));
     }
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Booking>> updateBooking(@PathVariable Long id, @RequestBody Booking booking){
-        return bookingServiceImpl.updateBooking(id, booking);
-    }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBooking(@PathVariable Long id){
-        return bookingServiceImpl.deleteBooking(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteBooking(@PathVariable Long id) {
+        bookingService.deleteBooking(id);
+        return ApiResponse.ok("Booking deleted successfully", null);
     }
-
-
 }

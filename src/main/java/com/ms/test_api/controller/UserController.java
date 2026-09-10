@@ -1,80 +1,63 @@
 package com.ms.test_api.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
-import com.ms.test_api.dto.BranchDTO;
-import com.ms.test_api.dto.UserDTO;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
+
 import com.ms.test_api.dto.request.UserCreationRequest;
+import com.ms.test_api.dto.request.UserUpdateRequest;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.entity.UserSoccerField;
-import com.ms.test_api.service.impl.UserServiceImpl;
+import com.ms.test_api.dto.response.UserResponse;
+import com.ms.test_api.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-
-
-
 
 @RestController
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-@Slf4j
-@RequestMapping("/api/users")
 public class UserController {
 
-    private final UserServiceImpl userServiceImpl;
-
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers(){
-        try {
-            List<UserDTO> userDTOs = userServiceImpl.getAllUsers();
-            ApiResponse<List<UserDTO>> response = new ApiResponse<List<UserDTO>>(
-                "Successfully retrieved user data", 
-                HttpStatus.OK.value(), 
-                userDTOs
-            );
-            return new ResponseEntity(response, HttpStatus.OK);
-        } catch (Exception e) {
-            ApiResponse<List<BranchDTO>> response = new ApiResponse<>(
-                "Failed to retrieve user data",
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                null
-            );
-            return new ResponseEntity(response, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<UserSoccerField>> registerUser(@RequestBody @Valid UserCreationRequest user){
-        return userServiceImpl.registerUser(user);
+    public ResponseEntity<ApiResponse<UserResponse>> register(@RequestBody @Valid UserCreationRequest request) {
+        return ApiResponse.created("User registered successfully", userService.register(request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        return ApiResponse.ok("Users retrieved successfully", userService.getAllUsers());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.ok("Current user retrieved", userService.getByUsername(jwt.getSubject()));
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(@PathVariable String username){
-        return userServiceImpl.getUserByUsername(username);
+    @PreAuthorize("hasRole('ADMIN') or #username == authentication.name")
+    public ResponseEntity<ApiResponse<UserResponse>> getUser(@PathVariable String username) {
+        return ApiResponse.ok("User retrieved successfully", userService.getByUsername(username));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable int id, @RequestBody UserSoccerField user){
-        return userServiceImpl.updateUserByUsername(id, user);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(
+            @PathVariable Long id,
+            @RequestBody @Valid UserUpdateRequest request) {
+        return ApiResponse.ok("User updated successfully", userService.updateUser(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable int id){
-        return userServiceImpl.deleteUser(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ApiResponse.ok("User deleted successfully", null);
     }
-    
-
 }
