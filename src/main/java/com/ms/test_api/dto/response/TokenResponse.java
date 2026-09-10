@@ -1,15 +1,10 @@
 package com.ms.test_api.dto.response;
 
-import java.io.Serializable;
+import com.ms.test_api.entity.enums.RoleName;
 
-import lombok.Builder;
-import lombok.Getter;
-
-@Getter
-@Builder
-public class TokenResponse implements Serializable{
-    private boolean authenticated;
-    private String token;
-    private String role;
-    private int userId;
-}
+public record TokenResponse(
+        boolean authenticated,
+        String token,
+        RoleName role,
+        Long userId
+) {}
