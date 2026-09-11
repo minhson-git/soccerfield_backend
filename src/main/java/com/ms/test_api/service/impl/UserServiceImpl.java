@@ -12,7 +12,7 @@ import com.ms.test_api.dto.response.UserResponse;
 import com.ms.test_api.entity.Role;
 import com.ms.test_api.entity.User;
 import com.ms.test_api.entity.enums.RoleName;
-import com.ms.test_api.exception.BadRequestException;
+import com.ms.test_api.exception.ConflictException;
 import com.ms.test_api.exception.ResourceNotFoundException;
 import com.ms.test_api.mapper.UserMapper;
 import com.ms.test_api.repository.RoleRepository;
@@ -43,14 +43,14 @@ public class UserServiceImpl implements UserService {
     public UserResponse register(UserCreationRequest request) {
 
         if (userRepository.existsByUsername(request.username())) {
-            throw new BadRequestException("Username already exists: " + request.username());
+            throw new ConflictException("Username already exists: " + request.username());
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new BadRequestException("Email already exists: " + request.email());
+            throw new ConflictException("Email already exists: " + request.email());
         }
 
         Role customerRole = roleRepository.findByName(RoleName.CUSTOMER)
-                .orElseThrow(() -> new ResourceNotFoundException("Default role CUSTOMER is not configured"));
+                .orElseThrow(() -> new IllegalStateException("Default role CUSTOMER is not configured"));
 
         User user = new User();
         user.setUsername(request.username());
@@ -79,7 +79,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (!user.getEmail().equals(request.email()) && userRepository.existsByEmail(request.email())) {
-            throw new BadRequestException("Email already exists: " + request.email());
+            throw new ConflictException("Email already exists: " + request.email());
         }
 
         user.setEmail(request.email());

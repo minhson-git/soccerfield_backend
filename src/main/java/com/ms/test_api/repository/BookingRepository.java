@@ -1,5 +1,7 @@
 package com.ms.test_api.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,4 +15,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Override
     @EntityGraph(attributePaths = { "user", "user.role", "field", "field.branch" })
     Page<Booking> findAll(Specification<Booking> spec, Pageable pageable);
+
+    @Override
+    @EntityGraph(attributePaths = { "user", "user.role", "field", "field.branch" })
+    Optional<Booking> findById(Long id);
 }

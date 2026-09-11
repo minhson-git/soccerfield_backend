@@ -7,6 +7,7 @@ import java.time.Duration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import com.ms.test_api.entity.User;
 import com.ms.test_api.entity.enums.BookingStatus;
 import com.ms.test_api.entity.enums.FieldStatus;
 import com.ms.test_api.exception.BadRequestException;
+import com.ms.test_api.exception.ConflictException;
 import com.ms.test_api.exception.ResourceNotFoundException;
 import com.ms.test_api.mapper.BookingMapper;
 import com.ms.test_api.repository.BookingRepository;
@@ -47,6 +49,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
+    @PostAuthorize("hasAnyRole('ADMIN', 'OWNER') or returnObject.user().username() == authentication.name")
     public BookingResponse getBookingById(Long id) {
         return bookingMapper.toResponse(findBooking(id));
     }
@@ -94,10 +97,10 @@ public class BookingServiceImpl implements BookingService {
             throw new AccessDeniedException("You can only cancel your own booking");
         }
         if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new BadRequestException("Booking is already cancelled");
+            throw new ConflictException("Booking is already cancelled");
         }
         if (booking.getStatus() == BookingStatus.COMPLETED) {
-            throw new BadRequestException("Completed booking cannot be cancelled");
+            throw new ConflictException("Completed booking cannot be cancelled");
         }
 
         // TODO (Week 2 - Day 12): áp dụng chính sách huỷ (hạn chót trước giờ đá)
