@@ -9,5 +9,6 @@ public record BookingFilter(
         String username,
         String branchName,
         BookingStatus status,
-        LocalDate bookingDate
+        LocalDate bookingDate,
+        String ownerUsername
 ) {}

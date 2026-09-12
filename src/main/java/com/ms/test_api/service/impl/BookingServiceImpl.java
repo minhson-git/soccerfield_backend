@@ -49,7 +49,9 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional(readOnly = true)
-    @PostAuthorize("hasAnyRole('ADMIN', 'OWNER') or returnObject.user().username() == authentication.name")
+    @PostAuthorize("hasRole('ADMIN') "
+            + "or returnObject.user().username() == authentication.name "
+            + "or @branchSecurity.ownsBookedField(returnObject.id(), authentication.name)")
     public BookingResponse getBookingById(Long id) {
         return bookingMapper.toResponse(findBooking(id));
     }

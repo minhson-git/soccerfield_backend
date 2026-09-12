@@ -34,6 +34,11 @@ public final class BookingSpecification {
             if (filter.bookingDate() != null) {
                 predicates.add(cb.equal(root.get("bookingDate"), filter.bookingDate()));
             }
+            if (StringUtils.hasText(filter.ownerUsername())) {
+                predicates.add(cb.equal(
+                        root.get("field").get("branch").get("owner").get("username"),
+                        filter.ownerUsername()));
+            }
 
             return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
         };

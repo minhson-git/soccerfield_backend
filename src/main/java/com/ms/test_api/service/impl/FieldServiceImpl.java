@@ -2,6 +2,7 @@ package com.ms.test_api.service.impl;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +10,7 @@ import com.ms.test_api.dto.request.FieldRequest;
 import com.ms.test_api.dto.response.FieldResponse;
 import com.ms.test_api.entity.Branch;
 import com.ms.test_api.entity.Field;
+import com.ms.test_api.exception.BadRequestException;
 import com.ms.test_api.exception.ResourceNotFoundException;
 import com.ms.test_api.mapper.FieldMapper;
 import com.ms.test_api.repository.BranchRepository;
@@ -42,6 +44,7 @@ public class FieldServiceImpl implements FieldService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or @branchSecurity.ownsBranch(#request.branchId(), authentication.name)")
     public FieldResponse createField(FieldRequest request) {
         Field field = new Field();
         fieldMapper.applyRequest(field, request);
@@ -51,8 +54,14 @@ public class FieldServiceImpl implements FieldService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or @branchSecurity.ownsField(#id, authentication.name)")
     public FieldResponse updateField(Long id, FieldRequest request) {
         Field field = findField(id);
+
+        if (!request.branchId().equals(field.getBranch().getId())) {
+            throw new BadRequestException("Moving a field to another branch is not supported");
+        }
+        
         fieldMapper.applyRequest(field, request);
         field.setBranch(findBranch(request.branchId()));
         return fieldMapper.toResponse(fieldRepository.save(field));
