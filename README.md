@@ -64,7 +64,7 @@ Nguyên tắc chính:
 
 ```
 src/main/java/com/ms/test_api/
-├── config/         Cấu hình security, CORS, properties, scheduled job
+├── config/         Cấu hình security, CORS, properties, seed dữ liệu, scheduled job
 ├── controller/     REST endpoints
 ├── dto/
 │   ├── request/    Record đầu vào, gắn Bean Validation
@@ -74,7 +74,7 @@ src/main/java/com/ms/test_api/
 ├── mapper/         Chuyển entity sang DTO
 ├── repository/
 │   └── specification/   Bộ lọc động bằng Criteria API
-├── security/       Validator token tuỳ biến
+├── security/       Validator token tuỳ biến và bean kiểm tra quyền sở hữu
 └── service/
     └── impl/       Cài đặt nghiệp vụ
 ```
@@ -99,6 +99,11 @@ DB_USERNAME=root
 DB_PASSWORD=your_password
 JWT_SIGNER_KEY=chuoi_bi_mat_toi_thieu_64_ky_tu_vi_HS512_can_khoa_512_bit_khong_duoc_ngan_hon
 CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+# Tuỳ chọn: tạo tài khoản quản trị đầu tiên lúc khởi động
+APP_BOOTSTRAP_ADMIN_USERNAME=admin
+APP_BOOTSTRAP_ADMIN_PASSWORD=doi_mat_khau_nay_ngay
+APP_BOOTSTRAP_ADMIN_EMAIL=admin@example.com
 ```
 
 Khoá ký phải dài tối thiểu 64 ký tự. Ứng dụng kiểm tra điều kiện này lúc khởi động và
@@ -117,14 +122,18 @@ mysql -u root -p -e "CREATE DATABASE soccer_field_data CHARACTER SET utf8mb4;"
 Hibernate tự tạo bảng theo chế độ cập nhật lược đồ tự động. API phục vụ tại
 `http://localhost:8080`.
 
-### Seed dữ liệu bắt buộc
+### Seed dữ liệu
 
-Bảng vai trò phải có sẵn ba bản ghi, nếu không endpoint đăng ký sẽ lỗi vì không tìm thấy
-vai trò mặc định:
+Không cần chèn tay. Lúc khởi động, một `ApplicationRunner` tự tạo đủ ba vai trò nếu chưa
+có trong database.
 
-```sql
-INSERT INTO roles (name) VALUES ('CUSTOMER'), ('OWNER'), ('ADMIN');
-```
+Cùng lúc đó, nếu ba biến bootstrap ở trên được đặt, ứng dụng tạo một tài khoản quản trị
+đầu tiên. Bỏ trống thì bước này bị bỏ qua. Tài khoản chỉ được tạo một lần, lần khởi động
+sau không ghi đè gì. Đây là cách thoát khỏi thế bí ban đầu: endpoint đăng ký luôn cấp vai
+trò CUSTOMER, nên nếu không có sẵn một quản trị viên thì không ai nâng quyền được cho ai.
+
+Đổi mật khẩu ngay sau lần đăng nhập đầu tiên, rồi gỡ ba biến bootstrap khỏi file môi
+trường.
 
 ---
 
@@ -134,7 +143,7 @@ INSERT INTO roles (name) VALUES ('CUSTOMER'), ('OWNER'), ('ADMIN');
 | --- | --- | --- |
 | User | Tài khoản | thuộc một vai trò, có nhiều lịch đặt |
 | Role | Vai trò CUSTOMER, OWNER, ADMIN | có nhiều người dùng |
-| Branch | Chi nhánh, có giờ mở và đóng cửa | có nhiều sân |
+| Branch | Chi nhánh, có giờ mở và đóng cửa | có nhiều sân, thuộc một chủ sân tuỳ chọn |
 | Field | Sân, có loại và giá cơ bản | thuộc một chi nhánh |
 | Booking | Lịch đặt, có trạng thái và tổng tiền | thuộc một người dùng và một sân |
 | PricingRule | Giá theo thứ và khung giờ | thuộc một sân, chưa được dùng, xem Roadmap |
@@ -185,11 +194,47 @@ Bộ giải mã JWT ghép bốn kiểm tra chạy tuần tự:
 | Kiểm tra loại token | Dùng refresh token để gọi API |
 | Kiểm tra danh sách thu hồi | Token đã bị thu hồi hoặc thiếu định danh |
 
-### Phân quyền hai tầng
+### Phân cấp vai trò
 
-Tầng đường dẫn khai báo trong cấu hình security, quyết định endpoint nào công khai. Tầng
-phương thức dùng biểu thức SpEL cho các luật phụ thuộc dữ liệu, ví dụ chỉ chủ sở hữu mới
-xem được lịch đặt của mình.
+Ba vai trò xếp thành một chuỗi bao hàm: ADMIN bao hàm OWNER, OWNER bao hàm CUSTOMER. Nhờ
+vậy một endpoint chỉ cần khai báo mức thấp nhất được phép, các vai trò cao hơn tự động đi
+qua. Ví dụ endpoint yêu cầu OWNER thì ADMIN cũng vào được mà không phải liệt kê thêm.
+
+Phân cấp này được nối vào bộ xử lý biểu thức của method security, nên áp dụng cho cả
+`hasRole` trong chú thích lẫn kiểm tra ở tầng đường dẫn.
+
+### Ba tầng phân quyền
+
+| Tầng | Nơi khai báo | Trả lời câu hỏi |
+| --- | --- | --- |
+| Đường dẫn | Cấu hình security | Endpoint này có công khai không |
+| Vai trò | Chú thích trên controller hoặc service | Vai trò nào được gọi |
+| Quyền sở hữu | Bean kiểm tra quyền gọi trong biểu thức SpEL | Bản ghi cụ thể này có thuộc về người gọi không |
+
+Tầng thứ ba là phần mới nhất. Một bean chuyên trách trả lời ba câu hỏi: người này có sở
+hữu chi nhánh đó không, có sở hữu sân đó không, và có sở hữu chi nhánh chứa sân của lịch
+đặt đó không. Các chú thích gọi thẳng bean này trong biểu thức, ví dụ quyền sửa một sân
+được diễn đạt thành "là quản trị viên, hoặc sở hữu chính sân đó".
+
+Với sân, kiểm tra quyền nằm ở tầng service chứ không phải controller, vì nó cần đọc
+database để biết ai là chủ. Chủ sân chỉ thao tác được trên chi nhánh của mình, và không
+được chuyển một sân sang chi nhánh khác.
+
+Với lịch đặt, ba nhóm xem được một bản ghi: quản trị viên, người đã đặt, và chủ chi nhánh
+chứa sân đó. Khi chủ sân tìm kiếm lịch đặt, bộ lọc tự thêm điều kiện giới hạn theo chi
+nhánh mình sở hữu, nên họ không thấy dữ liệu của chi nhánh khác. Quản trị viên không bị
+giới hạn này.
+
+### Thay đổi vai trò
+
+Chỉ quản trị viên đổi được vai trò của người khác. Có hai ràng buộc:
+
+- Không hạ vai trò một chủ sân đang còn quản lý chi nhánh. Phải chuyển giao chi nhánh
+  trước, nếu không hệ thống từ chối với mã 409.
+- Vai trò mới **chưa có hiệu lực ngay** với access token đang lưu hành, vì vai trò nằm
+  trong token chứ không đọc lại từ database mỗi request. Độ trễ tối đa bằng thời hạn
+  access token, tức 15 phút. Hệ thống ghi một dòng cảnh báo vào log mỗi lần đổi vai trò
+  để việc này không bị quên.
 
 ---
 
@@ -212,8 +257,10 @@ Tiền tố chung là `/api/v1`. Cột quyền ghi Public nghĩa là không cầ
 | POST | `/users` | Public | Đăng ký, mặc định vai trò CUSTOMER |
 | GET | `/users` | ADMIN | Danh sách người dùng |
 | GET | `/users/me` | Đã đăng nhập | Hồ sơ của chính mình |
+| PUT | `/users/me` | Đã đăng nhập | Tự sửa hồ sơ của mình |
 | GET | `/users/{username}` | ADMIN hoặc chính chủ | Xem một hồ sơ |
-| PUT | `/users/{id}` | ADMIN | Cập nhật hồ sơ |
+| PUT | `/users/{id}` | ADMIN | Cập nhật hồ sơ người khác |
+| PATCH | `/users/{id}/role` | ADMIN | Đổi vai trò, xem lưu ý về độ trễ token |
 | DELETE | `/users/{id}` | ADMIN | Xoá tài khoản |
 
 ### Roles
@@ -225,13 +272,17 @@ Tiền tố chung là `/api/v1`. Cột quyền ghi Public nghĩa là không cầ
 
 ### Branches
 
-| Method | Endpoint | Quyền |
-| --- | --- | --- |
-| GET | `/branches` | Public |
-| GET | `/branches/{id}` | Public |
-| POST | `/branches` | ADMIN |
-| PUT | `/branches/{id}` | ADMIN |
-| DELETE | `/branches/{id}` | ADMIN |
+| Method | Endpoint | Quyền | Mô tả |
+| --- | --- | --- | --- |
+| GET | `/branches` | Public | Danh sách chi nhánh |
+| GET | `/branches/{id}` | Public | Chi tiết một chi nhánh |
+| GET | `/branches/me` | OWNER | Chi nhánh mình quản lý |
+| POST | `/branches` | ADMIN | Tạo chi nhánh, gán chủ qua `ownerId` |
+| PUT | `/branches/{id}` | ADMIN | Cập nhật, đổi chủ qua `ownerId` |
+| DELETE | `/branches/{id}` | ADMIN | Xoá chi nhánh |
+
+Trường `ownerId` là tuỳ chọn. Bỏ trống nghĩa là chi nhánh chưa có chủ. Tài khoản được gán
+phải đang mang vai trò OWNER, nếu không request bị từ chối với mã 400.
 
 ### Fields
 
@@ -239,9 +290,12 @@ Tiền tố chung là `/api/v1`. Cột quyền ghi Public nghĩa là không cầ
 | --- | --- | --- | --- |
 | GET | `/fields` | Public | Tìm kiếm có lọc và phân trang |
 | GET | `/fields/{id}` | Public | Chi tiết một sân |
-| POST | `/fields` | ADMIN, OWNER | Tạo sân |
-| PUT | `/fields/{id}` | ADMIN, OWNER | Cập nhật sân |
+| POST | `/fields` | ADMIN, hoặc chủ của chi nhánh đích | Tạo sân |
+| PUT | `/fields/{id}` | ADMIN, hoặc chủ của sân đó | Cập nhật sân |
 | DELETE | `/fields/{id}` | ADMIN | Xoá sân |
+
+Khi cập nhật, `branchId` phải trùng chi nhánh hiện tại của sân. Chuyển sân sang chi nhánh
+khác không được hỗ trợ và bị từ chối với mã 400.
 
 Tham số lọc khi tìm sân: `branchName`, `district`, `fieldType`, `status`, `minPrice`,
 `maxPrice`, cộng `page`, `size` và `sort`.
@@ -250,15 +304,16 @@ Tham số lọc khi tìm sân: `branchName`, `district`, `fieldType`, `status`, 
 
 | Method | Endpoint | Quyền | Mô tả |
 | --- | --- | --- | --- |
-| GET | `/bookings` | ADMIN, OWNER | Tìm kiếm toàn hệ thống |
+| GET | `/bookings` | ADMIN xem tất cả, OWNER xem chi nhánh mình | Tìm kiếm |
 | GET | `/bookings/me` | Đã đăng nhập | Lịch đặt của chính mình |
-| GET | `/bookings/{id}` | Chủ sở hữu, ADMIN, OWNER | Chi tiết một lịch đặt |
+| GET | `/bookings/{id}` | Người đã đặt, chủ chi nhánh, ADMIN | Chi tiết một lịch đặt |
 | POST | `/bookings` | Đã đăng nhập | Tạo lịch đặt |
-| PATCH | `/bookings/{id}/cancel` | Chủ sở hữu | Huỷ lịch đặt |
+| PATCH | `/bookings/{id}/cancel` | Người đã đặt | Huỷ lịch đặt |
 | DELETE | `/bookings/{id}` | ADMIN | Xoá lịch đặt |
 
 Tham số lọc khi tìm lịch đặt: `userId`, `username`, `branchName`, `status`, `bookingDate`,
-cộng phân trang.
+cộng phân trang. Với tài khoản OWNER, hệ thống tự thêm một điều kiện giới hạn kết quả về
+các chi nhánh người đó sở hữu. Client không đặt được điều kiện này và cũng không bỏ được.
 
 ---
 
@@ -324,6 +379,37 @@ không đổi interface.
 mới, ứng dụng đọc lại vai trò từ database, nên việc hạ quyền một tài khoản có hiệu lực
 ngay ở lần làm mới kế tiếp thay vì phải chờ refresh token hết hạn.
 
+**Vì sao dùng phân cấp vai trò thay vì liệt kê từng vai trò.** Trước đây mỗi endpoint phải
+ghi rõ cả ADMIN lẫn OWNER. Cách đó dễ sót: thêm một endpoint mới mà quên ADMIN là quản trị
+viên mất quyền một cách âm thầm. Khai báo ADMIN bao hàm OWNER, OWNER bao hàm CUSTOMER đưa
+quy tắc về một chỗ duy nhất, còn endpoint chỉ cần nói mức tối thiểu.
+
+**Vì sao kiểm tra quyền sở hữu nằm ở tầng service.** Câu hỏi "sân này có phải của bạn
+không" cần truy vấn database, nên không trả lời được ở tầng đường dẫn. Đặt kiểm tra ngay
+trên phương thức service khiến luật đi cùng nghiệp vụ: bất kỳ ai gọi phương thức đó, từ
+controller nào, cũng bị kiểm tra như nhau.
+
+**Vì sao lọc theo chủ sân ở tầng truy vấn chứ không lọc sau khi lấy về.** Nếu tải toàn bộ
+lịch đặt rồi mới bỏ bớt, phân trang sẽ sai và dữ liệu của chi nhánh khác vẫn đi qua bộ
+nhớ ứng dụng. Thêm điều kiện vào câu truy vấn khiến database chỉ trả về đúng phần được
+phép xem.
+
+**Vì sao không cho hạ vai trò một chủ sân đang còn chi nhánh.** Hạ quyền mà không chuyển
+giao sẽ để lại chi nhánh không ai quản lý, còn người vừa bị hạ vẫn là chủ trên dữ liệu
+nhưng không còn quyền thao tác. Chặn ngay tại thời điểm đổi vai trò rẻ hơn nhiều so với đi
+dọn dữ liệu mồ côi sau này.
+
+**Vì sao chấp nhận độ trễ 15 phút khi đổi vai trò.** Giải pháp triệt để là đọc vai trò từ
+database ở mỗi request, nhưng như vậy mất đi ưu điểm chính của JWT là không phải truy vấn.
+Cách thay thế là thu hồi toàn bộ token của người vừa bị đổi vai trò. Hiện chưa làm vì
+blacklist đang đánh theo từng token chứ không theo người dùng. Trong lúc đó, access token
+15 phút giới hạn cửa sổ rủi ro ở mức chấp nhận được, và mỗi lần đổi vai trò đều ghi log.
+
+**Vì sao tạo tài khoản quản trị lúc khởi động.** Endpoint đăng ký luôn cấp vai trò
+CUSTOMER, và chỉ quản trị viên mới nâng quyền được. Không có lối vào ban đầu thì hệ thống
+mới dựng lên sẽ không có ai đủ quyền làm gì. Tài khoản này chỉ được tạo khi có cấu hình
+rõ ràng, tạo đúng một lần, và ghi cảnh báo nhắc đổi mật khẩu.
+
 **Vì sao mapper viết tay thay vì MapStruct.** Số lượng entity còn nhỏ, mapper thủ công
 không cần thêm annotation processor vào vòng đời build và dễ đọc khi debug. Sẽ cân nhắc
 lại nếu số lượng DTO tăng đáng kể.
@@ -349,8 +435,11 @@ Cập nhật mục này khi hoàn thành từng hạng mục. Đánh dấu đã 
 
 ### Phân quyền
 
-- [ ] Giới hạn phạm vi vai trò OWNER theo chi nhánh mình quản lý
+- [x] Giới hạn phạm vi vai trò OWNER theo chi nhánh mình quản lý
 - [ ] Cho phép ADMIN và OWNER xác nhận lịch đặt đang chờ
+- [ ] Cho phép chủ chi nhánh huỷ lịch đặt trên sân của mình
+- [ ] Thu hồi toàn bộ token của một người khi vai trò thay đổi, để bỏ độ trễ 15 phút
+- [ ] Đưa thông tin chủ sở hữu vào response của chi nhánh, hiện chỉ lưu chứ chưa trả về
 
 ### Hạ tầng
 
@@ -376,6 +465,11 @@ Ghi theo thứ tự mới nhất trước. Mỗi mục nêu ngắn gọn thay đ
 
 ### Chưa phát hành
 
+- Tự tạo ba vai trò lúc khởi động, kèm tuỳ chọn tạo tài khoản quản trị đầu tiên
+- Thêm phân cấp vai trò ADMIN trên OWNER trên CUSTOMER, và bean kiểm tra quyền sở hữu
+  dùng trong biểu thức phân quyền
+- Thêm quyền sở hữu chi nhánh: chủ sân chỉ quản lý sân và xem lịch đặt của chi nhánh mình
+- Thêm endpoint quản trị đổi vai trò người dùng và endpoint tự sửa hồ sơ
 - Thêm logout thu hồi cả access token và refresh token
 - Thêm refresh token có xoay vòng và bảng token bị thu hồi
 - Tách dịch vụ JWT khỏi dịch vụ xác thực, chuyển cấu hình sang các record properties có
