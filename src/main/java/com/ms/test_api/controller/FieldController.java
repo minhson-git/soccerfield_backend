@@ -48,11 +48,13 @@ public class FieldController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<FieldResponse>> createField(@RequestBody @Valid FieldRequest request) {
         return ApiResponse.created("Field created successfully", fieldService.createField(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<FieldResponse>> updateField(
             @PathVariable Long id,
             @RequestBody @Valid FieldRequest request) {

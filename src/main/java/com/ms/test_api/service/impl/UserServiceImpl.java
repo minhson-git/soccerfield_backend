@@ -2,11 +2,11 @@ package com.ms.test_api.service.impl;
 
 import java.util.List;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ms.test_api.config.JwtProperties;
 import com.ms.test_api.dto.request.UserCreationRequest;
 import com.ms.test_api.dto.request.UserUpdateRequest;
 import com.ms.test_api.dto.response.UserResponse;
@@ -34,7 +34,6 @@ public class UserServiceImpl implements UserService {
     private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
-    private final JwtProperties jwtProperties;
 
     @Override
     @Transactional(readOnly = true)
@@ -108,6 +107,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public UserResponse changeRole(Long id, RoleName roleName) {
 
         User user = userRepository.findById(id)
@@ -126,7 +126,7 @@ public class UserServiceImpl implements UserService {
 
         // Xem §10.2: access token đang lưu hành vẫn mang scope cũ tới khi hết hạn.
         log.warn("Role of user {} changed to {}; existing access tokens keep the old scope "
-                + "for up to {} minutes", user.getUsername(), roleName, jwtProperties.accessTokenTtlMinutes());
+                + "for up to {} minutes", user.getUsername(), roleName);
 
         return userMapper.toResponse(userRepository.save(user));
     }

@@ -61,14 +61,14 @@ public class FieldServiceImpl implements FieldService {
         if (!request.branchId().equals(field.getBranch().getId())) {
             throw new BadRequestException("Moving a field to another branch is not supported");
         }
-        
+
         fieldMapper.applyRequest(field, request);
-        field.setBranch(findBranch(request.branchId()));
         return fieldMapper.toResponse(fieldRepository.save(field));
     }
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteField(Long id) {
         fieldRepository.delete(findField(id));
     }

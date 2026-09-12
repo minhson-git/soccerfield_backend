@@ -1,10 +1,7 @@
 package com.ms.test_api.config;
 
-import java.util.List;
-
 import javax.crypto.spec.SecretKeySpec;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -62,6 +59,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/users")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/branches/me").authenticated()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/fields",
                                 "/api/v1/fields/{id}",
