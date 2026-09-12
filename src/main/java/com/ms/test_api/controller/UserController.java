@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import com.ms.test_api.dto.request.UserCreationRequest;
+import com.ms.test_api.dto.request.UserRoleUpdateRequest;
 import com.ms.test_api.dto.request.UserUpdateRequest;
 import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.dto.response.UserResponse;
@@ -52,6 +53,22 @@ public class UserController {
             @PathVariable Long id,
             @RequestBody @Valid UserUpdateRequest request) {
         return ApiResponse.ok("User updated successfully", userService.updateUser(id, request));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateOwnProfile(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody @Valid UserUpdateRequest request) {
+        return ApiResponse.ok("Profile updated successfully",
+                userService.updateOwnProfile(jwt.getSubject(), request));
+    }
+
+    @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserResponse>> changeRole(
+            @PathVariable Long id,
+            @RequestBody @Valid UserRoleUpdateRequest request) {
+        return ApiResponse.ok("Role updated successfully", userService.changeRole(id, request.role()));
     }
 
     @DeleteMapping("/{id}")
