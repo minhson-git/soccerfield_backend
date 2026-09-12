@@ -28,5 +28,7 @@ public record BranchRequest(
 
         @NotNull
         @JsonFormat(pattern = "HH:mm")
-        LocalTime closingTime
+        LocalTime closingTime,
+
+        Long ownerId
 ) {}

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import com.ms.test_api.dto.request.BranchRequest;
@@ -29,6 +30,13 @@ public class BranchController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BranchResponse>> getBranch(@PathVariable Long id) {
         return ApiResponse.ok("Branch retrieved successfully", branchService.getBranchById(id));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<ApiResponse<List<BranchResponse>>> getOwnedBranches(Authentication authentication) {
+        return ApiResponse.ok("Owned branches retrieved successfully",
+                branchService.getOwnedBranches(authentication.getName()));
     }
 
     @PostMapping

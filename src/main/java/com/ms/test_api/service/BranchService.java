@@ -16,4 +16,6 @@ public interface BranchService {
     BranchResponse updateBranch(Long id, BranchRequest request);
 
     void deleteBranch(Long id);
+
+    List<BranchResponse> getOwnedBranches(String username);
 }
