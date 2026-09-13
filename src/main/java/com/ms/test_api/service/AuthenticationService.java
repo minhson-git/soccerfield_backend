@@ -1,5 +1,7 @@
 package com.ms.test_api.service;
 
+import java.util.Optional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import com.ms.test_api.dto.response.AuthenticationResponse;
 import com.ms.test_api.entity.User;
 import com.ms.test_api.exception.UnauthorizedException;
 import com.ms.test_api.repository.UserRepository;
+import com.ms.test_api.util.PhoneNumbers;
 import com.nimbusds.jwt.SignedJWT;
 
 import lombok.RequiredArgsConstructor;
@@ -25,14 +28,21 @@ public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtProperties jwtProperties;
     private final JwtService jwtService;
     private final TokenBlacklistService tokenBlacklistService;
-    private final JwtProperties jwtProperties;
+
+    private Optional<User> findByIdentifier(String identifier) {
+        String normalizedPhone = PhoneNumbers.normalizeVietnamese(identifier);
+
+        return normalizedPhone != null
+                ? userRepository.findByPhone(normalizedPhone)
+                : userRepository.findByUsername(identifier.trim());
+    }
 
     @Transactional(readOnly = true)
     public AuthenticationResponse login(SignInRequest request) {
-
-        User user = userRepository.findByUsername(request.username())
+        User user = findByIdentifier(request.identifier())
                 .orElseThrow(() -> new UnauthorizedException("Username or password is incorrect"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
