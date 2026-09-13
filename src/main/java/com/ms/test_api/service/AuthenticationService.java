@@ -43,10 +43,10 @@ public class AuthenticationService {
     @Transactional(readOnly = true)
     public AuthenticationResponse login(SignInRequest request) {
         User user = findByIdentifier(request.identifier())
-                .orElseThrow(() -> new UnauthorizedException("Username or password is incorrect"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new UnauthorizedException("Username or password is incorrect");
+            throw new UnauthorizedException("Invalid credentials");
         }
 
         if (!Boolean.TRUE.equals(user.getEnabled())) {

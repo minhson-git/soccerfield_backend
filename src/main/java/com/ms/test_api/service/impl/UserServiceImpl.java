@@ -1,6 +1,7 @@
 package com.ms.test_api.service.impl;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -61,7 +62,9 @@ public class UserServiceImpl implements UserService {
     public UserResponse register(UserCreationRequest request) {
 
         String normalizedPhone = requireValidPhone(request.phone());
-
+        if (normalizedPhone != null) {
+            throw new BadRequestException("Phone number is required");
+        }
         if (userRepository.existsByUsername(request.username())) {
             throw new ConflictException("Username already exists: " + request.username());
         }
@@ -101,10 +104,7 @@ public class UserServiceImpl implements UserService {
         }
 
         String normalizedPhone = requireValidPhone(request.phone());
-        if (normalizedPhone == null && user.getPhone() != null) {
-            throw new BadRequestException("Phone number cannot be empty");
-        }
-        if (!user.getPhone().equals(normalizedPhone) && userRepository.existsByPhone(normalizedPhone)) {
+        if (!Objects.equals(user.getPhone(), normalizedPhone) && userRepository.existsByPhone(normalizedPhone)) {
             throw new ConflictException("Phone number already exists: " + request.phone());
         }
 

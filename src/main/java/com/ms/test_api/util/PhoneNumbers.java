@@ -15,9 +15,7 @@ public final class PhoneNumbers {
 
         String digits = NON_DIGITS.matcher(raw.trim()).replaceAll("");
 
-        if (digits.startsWith("+84")) {
-            digits = digits.substring(3);
-        } else if (digits.startsWith("84")) {
+        if (digits.startsWith("84")) {
             digits = digits.substring(2);
         } else if (digits.startsWith("0")) {
             digits = digits.substring(1);
