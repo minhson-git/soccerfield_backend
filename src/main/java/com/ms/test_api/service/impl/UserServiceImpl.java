@@ -42,11 +42,12 @@ public class UserServiceImpl implements UserService {
         if (phone == null || phone.isBlank()) {
             return null;
         }
-        if (PhoneNumbers.normalizeVietnamese(phone) == null) {
+        String normalizedPhone = PhoneNumbers.normalizeVietnamese(phone);
+        if (normalizedPhone == null) {
             throw new BadRequestException("Invalid phone number format: " + phone);
         }
 
-        return PhoneNumbers.normalizeVietnamese(phone);
+        return normalizedPhone;
     }
 
     @Override
@@ -62,16 +63,13 @@ public class UserServiceImpl implements UserService {
     public UserResponse register(UserCreationRequest request) {
 
         String normalizedPhone = requireValidPhone(request.phone());
-        if (normalizedPhone != null) {
-            throw new BadRequestException("Phone number is required");
-        }
         if (userRepository.existsByUsername(request.username())) {
             throw new ConflictException("Username already exists: " + request.username());
         }
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists: " + request.email());
         }
-        if (userRepository.existsByPhone(normalizedPhone)) {
+        if (normalizedPhone != null && userRepository.existsByPhone(normalizedPhone)) {
             throw new ConflictException("Phone number already exists: " + request.phone());
         }
 
@@ -104,7 +102,9 @@ public class UserServiceImpl implements UserService {
         }
 
         String normalizedPhone = requireValidPhone(request.phone());
-        if (!Objects.equals(user.getPhone(), normalizedPhone) && userRepository.existsByPhone(normalizedPhone)) {
+        if (normalizedPhone != null
+                && !Objects.equals(user.getPhone(), normalizedPhone)
+                && userRepository.existsByPhone(normalizedPhone)) {
             throw new ConflictException("Phone number already exists: " + request.phone());
         }
 
