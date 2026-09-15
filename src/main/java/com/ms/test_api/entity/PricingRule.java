@@ -16,6 +16,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -23,7 +24,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
-@Table(name = "pricing_rules")
+@Table(name = "pricing_rules", indexes = @Index(name = "idx_pricing_rules_branch_day", columnList = "branch_id, day_of_week"))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -44,8 +45,8 @@ public class PricingRule {
     @Column(name = "end_time", nullable = false)
     LocalTime endTime;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    BigDecimal price;
+    @Column(nullable = false, precision = 4, scale = 2)
+    BigDecimal multiplier;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -58,8 +59,8 @@ public class PricingRule {
     // =========================
     // Relationship
     // =========================
-
+    
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "field_id", nullable = false)
-    Field field;
+    @JoinColumn(name = "branch_id", nullable = false)
+    Branch branch;
 }

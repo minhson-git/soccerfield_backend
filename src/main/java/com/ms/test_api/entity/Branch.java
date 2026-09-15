@@ -53,4 +53,7 @@ public class Branch {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     User owner;
+
+    @OneToMany(mappedBy = "branch", fetch = FetchType.LAZY)
+    List<PricingRule> pricingRules = new ArrayList<>();
 }

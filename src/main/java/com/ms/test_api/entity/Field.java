@@ -70,7 +70,4 @@ public class Field {
 
     @OneToMany(mappedBy = "field")
     List<Booking> bookings = new ArrayList<>();
-
-    @OneToMany(mappedBy = "field")
-    List<PricingRule> pricingRules = new ArrayList<>();
 }
