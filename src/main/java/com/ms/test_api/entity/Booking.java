@@ -21,6 +21,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Index;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -29,7 +30,10 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "bookings")
+@Table(name = "bookings", indexes = {
+        @Index(name = "idx_bookings_field_date", columnList = "field_id, booking_date"),
+        @Index(name = "idx_bookings_user_status", columnList = "user_id, status")
+})
 public class Booking {
 
     @Id
