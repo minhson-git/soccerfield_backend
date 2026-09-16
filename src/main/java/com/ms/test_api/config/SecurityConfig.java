@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/v1/fields",
                                 "/api/v1/fields/{id}",
+                                "/api/v1/fields/{id}/availability",
                                 "/api/v1/branches",
                                 "/api/v1/branches/{id}")
                         .permitAll()
