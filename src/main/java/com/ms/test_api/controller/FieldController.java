@@ -1,17 +1,20 @@
 package com.ms.test_api.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.ms.test_api.dto.request.FieldRequest;
 import com.ms.test_api.dto.response.ApiResponse;
+import com.ms.test_api.dto.response.FieldAvailabilityResponse;
 import com.ms.test_api.dto.response.FieldResponse;
 import com.ms.test_api.entity.enums.FieldStatus;
 import com.ms.test_api.entity.enums.FieldType;
@@ -45,6 +48,15 @@ public class FieldController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<FieldResponse>> getField(@PathVariable Long id) {
         return ApiResponse.ok("Field retrieved successfully", fieldService.getFieldById(id));
+    }
+
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<ApiResponse<FieldAvailabilityResponse>> getAvailability(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+        return ApiResponse.ok("Availability retrieved successfully",
+                fieldService.getAvailability(id, date));
     }
 
     @PostMapping

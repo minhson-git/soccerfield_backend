@@ -1,5 +1,9 @@
 package com.ms.test_api.service.impl;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -7,17 +11,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ms.test_api.dto.request.FieldRequest;
+import com.ms.test_api.dto.response.AvailabilitySlotResponse;
+import com.ms.test_api.dto.response.FieldAvailabilityResponse;
 import com.ms.test_api.dto.response.FieldResponse;
 import com.ms.test_api.entity.Branch;
 import com.ms.test_api.entity.Field;
+import com.ms.test_api.entity.enums.BookingStatus;
+import com.ms.test_api.entity.enums.FieldStatus;
 import com.ms.test_api.exception.BadRequestException;
 import com.ms.test_api.exception.ResourceNotFoundException;
 import com.ms.test_api.mapper.FieldMapper;
+import com.ms.test_api.repository.BookingRepository;
 import com.ms.test_api.repository.BranchRepository;
 import com.ms.test_api.repository.FieldRepository;
 import com.ms.test_api.repository.specification.FieldFilter;
 import com.ms.test_api.repository.specification.FieldSpecification;
 import com.ms.test_api.service.FieldService;
+import com.ms.test_api.util.AvailabilityCalculator;
+import com.ms.test_api.util.AvailabilitySlot;
+import com.ms.test_api.util.BookingPolicy;
+import com.ms.test_api.util.TimeRange;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +40,7 @@ public class FieldServiceImpl implements FieldService {
 
     private final FieldRepository fieldRepository;
     private final BranchRepository branchRepository;
+    private final BookingRepository bookingRepository;
     private final FieldMapper fieldMapper;
 
     @Override
@@ -40,6 +54,57 @@ public class FieldServiceImpl implements FieldService {
     @Transactional(readOnly = true)
     public FieldResponse getFieldById(Long id) {
         return fieldMapper.toResponse(findField(id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FieldAvailabilityResponse getAvailability(Long fieldId, LocalDate date) {
+
+        Field field = findField(fieldId);
+        if (date.isBefore(LocalDate.now())) {
+            throw new BadRequestException("Date cannot be in the past");
+        }
+        if (date.isAfter(LocalDate.now().plusDays(BookingPolicy.MAX_ADVANCE_DAYS))) {
+            throw new BadRequestException(
+                    "Date cannot be more than " + BookingPolicy.MAX_ADVANCE_DAYS + " days in the future");
+        }
+
+        Branch branch = field.getBranch();
+        TimeRange openingHours = new TimeRange(branch.getOpeningTime(), branch.getClosingTime());
+        LocalDate today = LocalDate.now();
+
+        // Sân không ACTIVE: coi như cả ngày đã bị chiếm, không ô nào đặt được.
+        List<TimeRange> occupied = field.getStatus() == FieldStatus.ACTIVE
+                ? loadOccupiedRanges(fieldId, date)
+                : List.of(openingHours);
+
+        // Chỉ chặn các ô đã qua khi xem lịch của chính hôm nay.
+        LocalTime notBefore = date.isEqual(today) ? LocalTime.now() : null;
+
+        List<AvailabilitySlot> slots = AvailabilityCalculator.calculate(
+                openingHours, BookingPolicy.SLOT_MINUTES, occupied, notBefore);
+
+        return new FieldAvailabilityResponse(
+                field.getId(),
+                field.getName(),
+                date,
+                openingHours.start(),
+                openingHours.end(),
+                BookingPolicy.SLOT_MINUTES,
+                BookingPolicy.MIN_DURATION_MINUTES,
+                BookingPolicy.MAX_DURATION_MINUTES,
+                slots.stream()
+                        .map(slot -> new AvailabilitySlotResponse(
+                                slot.startTime(), slot.endTime(), slot.available()))
+                        .toList());
+    }
+
+    private List<TimeRange> loadOccupiedRanges(Long fieldId, LocalDate date) {
+        return bookingRepository
+                .findByField_IdAndBookingDateAndStatusIn(fieldId, date, BookingStatus.OCCUPYING)
+                .stream()
+                .map(booking -> new TimeRange(booking.getStartTime(), booking.getEndTime()))
+                .toList();
     }
 
     @Override

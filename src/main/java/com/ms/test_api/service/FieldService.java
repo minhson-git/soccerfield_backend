@@ -1,9 +1,12 @@
 package com.ms.test_api.service;
 
+import java.time.LocalDate;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.ms.test_api.dto.request.FieldRequest;
+import com.ms.test_api.dto.response.FieldAvailabilityResponse;
 import com.ms.test_api.dto.response.FieldResponse;
 import com.ms.test_api.repository.specification.FieldFilter;
 
@@ -18,4 +21,6 @@ public interface FieldService {
     FieldResponse updateField(Long id, FieldRequest request);
 
     void deleteField(Long id);
+
+    FieldAvailabilityResponse getAvailability(Long fieldId, LocalDate date);
 }
