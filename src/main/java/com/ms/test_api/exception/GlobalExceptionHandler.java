@@ -8,7 +8,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -212,6 +214,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 friendlyMessage(ex, status), status, resolvePath(request), null);
 
         return new ResponseEntity<>(apiResponse, headers, statusCode);
+    }
+
+    @ExceptionHandler({ PessimisticLockingFailureException.class, CannotAcquireLockException.class })
+    public ResponseEntity<ApiResponse<Void>> handleLockFailure(
+            Exception ex, HttpServletRequest request) {
+
+        log.warn("Lock acquisition failed on {} {}", request.getMethod(), request.getRequestURI(), ex);
+
+        return ApiResponse.error(HttpStatus.CONFLICT,
+                "This time slot is being booked by someone else, please try again",
+                request.getRequestURI());
     }
 
     // =====================================================
