@@ -28,6 +28,8 @@ import com.ms.test_api.repository.UserRepository;
 import com.ms.test_api.repository.specification.BookingFilter;
 import com.ms.test_api.repository.specification.BookingSpecification;
 import com.ms.test_api.service.BookingService;
+import com.ms.test_api.util.BookingValidator;
+import com.ms.test_api.util.TimeRange;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,29 +65,34 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
-        Field field = fieldRepository.findById(request.fieldId())
+        // Khoá dòng Field — xem §4. Phải đứng TRƯỚC mọi kiểm tra trùng.
+        Field field = fieldRepository.findByIdForUpdate(request.fieldId())
                 .orElseThrow(() -> new ResourceNotFoundException("Field not found with id: " + request.fieldId()));
 
         if (field.getStatus() != FieldStatus.ACTIVE) {
             throw new BadRequestException("Field is not available for booking");
         }
 
-        if (!request.endTime().isAfter(request.startTime())) {
-            throw new BadRequestException("End time must be after start time");
-        }
+        TimeRange requested = toTimeRange(request);
+        BookingValidator.validate(request.bookingDate(), requested, field.getBranch());
 
-        // TODO (Week 2 - Day 9): kiểm tra khung giờ nằm trong opening/closing time của branch
-        // TODO (Week 2 - Day 10): overlap detection + @Lock(PESSIMISTIC_WRITE) chống double booking
-        // TODO (Week 2 - Day 11): tính giá theo PricingRule thay vì basePrice
+        if (bookingRepository.existsOverlapping(
+                field.getId(),
+                request.bookingDate(),
+                requested.start(),
+                requested.end(),
+                BookingStatus.OCCUPYING)) {
+            throw new ConflictException("This time slot has already been booked");
+        }
 
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setField(field);
         booking.setBookingDate(request.bookingDate());
-        booking.setStartTime(request.startTime());
-        booking.setEndTime(request.endTime());
+        booking.setStartTime(requested.start());
+        booking.setEndTime(requested.end());
         booking.setStatus(BookingStatus.PENDING);
-        booking.setTotalPrice(calculateTemporaryPrice(field, request));
+        booking.setTotalPrice(calculateTemporaryPrice(field, requested));
 
         return bookingMapper.toResponse(bookingRepository.save(booking));
     }
@@ -123,10 +130,18 @@ public class BookingServiceImpl implements BookingService {
     }
 
     /** Tạm tính theo basePrice — sẽ được PricingService thay thế ở Day 11. */
-    private BigDecimal calculateTemporaryPrice(Field field, BookingRequest request) {
-        long minutes = Duration.between(request.startTime(), request.endTime()).toMinutes();
+    private BigDecimal calculateTemporaryPrice(Field field, TimeRange request) {
+        long minutes = Duration.between(request.start(), request.end()).toMinutes();
         BigDecimal hours = BigDecimal.valueOf(minutes)
                 .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
         return field.getBasePrice().multiply(hours).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private TimeRange toTimeRange(BookingRequest request) {
+        try {
+            return new TimeRange(request.startTime(), request.endTime());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(e.getMessage());
+        }
     }
 }
