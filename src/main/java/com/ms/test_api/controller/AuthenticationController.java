@@ -1,60 +1,47 @@
 package com.ms.test_api.controller;
 
-import java.text.ParseException;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ms.test_api.dto.request.IntrospectRequest;
+import com.ms.test_api.dto.request.LogoutRequest;
+import com.ms.test_api.dto.request.RefreshRequest;
 import com.ms.test_api.dto.request.SignInRequest;
 import com.ms.test_api.dto.response.ApiResponse;
-import com.ms.test_api.dto.response.IntrospectResponse;
-import com.ms.test_api.dto.response.TokenResponse;
+import com.ms.test_api.dto.response.AuthenticationResponse;
 import com.ms.test_api.service.AuthenticationService;
-import com.nimbusds.jose.JOSEException;
 
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
 
 @RestController
-@RequestMapping("/auth")
-@Validated
-@Slf4j
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ApiResponse<TokenResponse> authenticate(@RequestBody SignInRequest request){
-        var result = authenticationService.authenticate(request);
-        return ApiResponse.<TokenResponse>builder()
-                .message("Login Succesfully")
-                .statusCode(HttpStatus.OK.value())
-                .data(result)
-                .build();
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> login(
+            @RequestBody @Valid SignInRequest request) {
+        return ApiResponse.ok("Login successfully", authenticationService.login(request));
     }
 
-
-    @PostMapping("/introspect")
-    public ApiResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request) 
-            throws JOSEException, ParseException{
-        var result = authenticationService.introspectResponse(request);
-        return ApiResponse.<IntrospectResponse>builder()
-                .statusCode(HttpStatus.OK.value())
-                .data(result)
-                .build();
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> refresh(
+            @RequestBody @Valid RefreshRequest request) {
+        return ApiResponse.ok("Token refreshed successfully", authenticationService.refresh(request));
     }
 
-
-
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal Jwt accessToken,
+            @RequestBody @Valid LogoutRequest request) {
+        authenticationService.logout(accessToken, request);
+        return ApiResponse.ok("Logged out successfully", null);
+    }
 }

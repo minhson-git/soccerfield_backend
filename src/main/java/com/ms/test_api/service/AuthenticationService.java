@@ -1,108 +1,111 @@
 package com.ms.test_api.service;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import java.util.Optional;
 
-import com.ms.test_api.dto.request.IntrospectRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.ms.test_api.config.JwtProperties;
+import com.ms.test_api.dto.request.LogoutRequest;
+import com.ms.test_api.dto.request.RefreshRequest;
 import com.ms.test_api.dto.request.SignInRequest;
-import com.ms.test_api.dto.response.IntrospectResponse;
-import com.ms.test_api.dto.response.TokenResponse;
-import com.ms.test_api.modal.UserSoccerField;
-import com.ms.test_api.reponsitory.UserReponsitory;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSObject;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.Payload;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
+import com.ms.test_api.dto.response.AuthenticationResponse;
+import com.ms.test_api.entity.User;
+import com.ms.test_api.exception.UnauthorizedException;
+import com.ms.test_api.repository.UserRepository;
+import com.ms.test_api.util.PhoneNumbers;
 import com.nimbusds.jwt.SignedJWT;
 
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-
-import java.text.ParseException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final UserReponsitory userReponsitory;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtProperties jwtProperties;
+    private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    @NonFinal
-    protected static final String SIGNER_KEY = "5q4o2IvLashcRxzV+SpTRVhbcgTdvyYfdijgpGC8tTOFa3agKANLtoM9D4mNOHeF";
+    private Optional<User> findByIdentifier(String identifier) {
+        String normalizedPhone = PhoneNumbers.normalizeVietnamese(identifier);
 
-    public IntrospectResponse introspectResponse(IntrospectRequest request)
-            throws JOSEException, ParseException{
-        var token = request.getToken();
-
-        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
-
-        SignedJWT signedJWT = SignedJWT.parse(token);
-
-        Date expirtyTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-
-        var verifed = signedJWT.verify(verifier);
-
-        return IntrospectResponse.builder()
-                .valid(verifed && expirtyTime.after(new Date()))
-                .build();
-            
+        return normalizedPhone != null
+                ? userRepository.findByPhone(normalizedPhone)
+                : userRepository.findByUsername(identifier.trim());
     }
 
-    public TokenResponse authenticate(SignInRequest request){
-        var user = userReponsitory.findByUsername(request.getUsername()).orElseThrow(()-> new RuntimeException("User not exist"));
+    @Transactional(readOnly = true)
+    public AuthenticationResponse login(SignInRequest request) {
+        User user = findByIdentifier(request.identifier())
+                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
 
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
-
-        if(!authenticated){
-            throw new RuntimeException("Username or password incorrect");
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+            throw new UnauthorizedException("Invalid credentials");
         }
 
-        var token = generateToken(user);
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new UnauthorizedException("Account is disabled");
+        }
 
-        return TokenResponse.builder()
-                .token(token)
-                .authenticated(authenticated)
-                .role(user.getRole().getName())
-                .userId(user.getUserId())
-                .build();
+        return issueTokens(user);
     }
-    
-    private String generateToken (UserSoccerField user){
 
-        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+    @Transactional
+    public AuthenticationResponse refresh(RefreshRequest request) {
 
-        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                    .subject(user.getUsername())
-                    .issuer("minhson.dev")
-                    .issueTime(new Date())
-                    .expirationTime(new Date(
-                        Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli()
-                    ))
-                    .claim("scope", user.getRole().getName().toUpperCase())
-                    .build();
-        
-        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+        SignedJWT refreshToken = jwtService.parseAndVerify(request.refreshToken(), JwtService.TYPE_REFRESH);
+        String tokenId = jwtService.extractTokenId(refreshToken);
 
-        JWSObject jwsObject = new JWSObject(header, payload);
+        if (tokenBlacklistService.isBlacklisted(tokenId)) {
+            log.warn("Attempt to reuse a revoked refresh token: {}", tokenId);
+            throw new UnauthorizedException("Refresh token has been revoked");
+        }
 
+        User user = userRepository.findByUsername(jwtService.extractSubject(refreshToken))
+                .orElseThrow(() -> new UnauthorizedException("Token subject no longer exists"));
+
+        if (!Boolean.TRUE.equals(user.getEnabled())) {
+            throw new UnauthorizedException("Account is disabled");
+        }
+
+        // Rotation: refresh token cũ chỉ dùng được đúng một lần.
+        tokenBlacklistService.blacklist(tokenId, jwtService.extractExpiresAt(refreshToken));
+
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public void logout(Jwt accessToken, LogoutRequest request) {
+
+        if (accessToken.getId() != null && accessToken.getExpiresAt() != null) {
+            tokenBlacklistService.blacklist(accessToken.getId(), accessToken.getExpiresAt());
+        }
+
+        // Refresh token hỏng hoặc hết hạn không nên làm logout thất bại —
+        // mục tiêu của user đã đạt được: token cũ không dùng được nữa.
         try {
-            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
-            return jwsObject.serialize();
-        } catch (JOSEException e) {
-            log.error("Cannot create token", e);
-            throw new RuntimeException(e);
+            SignedJWT refreshToken = jwtService.parseAndVerify(request.refreshToken(), JwtService.TYPE_REFRESH);
+            tokenBlacklistService.blacklist(
+                    jwtService.extractTokenId(refreshToken),
+                    jwtService.extractExpiresAt(refreshToken));
+        } catch (UnauthorizedException e) {
+            log.debug("Refresh token supplied at logout was already invalid: {}", e.getMessage());
         }
+    }
+
+    private AuthenticationResponse issueTokens(User user) {
+        return new AuthenticationResponse(
+                jwtService.generateAccessToken(user),
+                jwtService.generateRefreshToken(user),
+                "Bearer",
+                jwtProperties.accessTokenTtlMinutes() * 60,
+                user.getRole().getName(),
+                user.getId());
     }
 }
