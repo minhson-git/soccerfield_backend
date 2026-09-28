@@ -1,6 +1,7 @@
 package com.ms.test_api.util;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import com.ms.test_api.entity.Branch;
@@ -15,16 +16,15 @@ public final class BookingValidator {
     private BookingValidator() {
     }
 
-    public static void validate(LocalDate bookingDate, TimeRange requested, Branch branch) {
-        validateDate(bookingDate);
+    public static void validate(LocalDate bookingDate, TimeRange requested, Branch branch, LocalDateTime now) {
+        validateDate(bookingDate, now.toLocalDate());
         validateGranularity(requested);
         validateDuration(requested);
         validateWithinOpeningHours(requested, branch);
-        validateNotInPast(bookingDate, requested);
+        validateNotInPast(bookingDate, requested, now);
     }
 
-    private static void validateDate(LocalDate bookingDate) {
-        LocalDate today = LocalDate.now();
+    private static void validateDate(LocalDate bookingDate, LocalDate today) {
         if (bookingDate.isBefore(today)) {
             throw new BadRequestException("Booking date cannot be in the past.");
         }
@@ -56,10 +56,10 @@ public final class BookingValidator {
         }
     }
 
-    private static void validateNotInPast(LocalDate bookingDate, TimeRange requested) {
-        if (bookingDate.isEqual(LocalDate.now())) {
-            LocalTime now = LocalTime.now();
-            if (!requested.start().isAfter(now)) {
+    private static void validateNotInPast(LocalDate bookingDate, TimeRange requested, LocalDateTime now) {
+        if (bookingDate.isEqual(now.toLocalDate())) {
+            LocalTime nowTime = LocalTime.now();
+            if (!requested.start().isAfter(nowTime)) {
                 throw new BadRequestException("Booking time cannot be in the past.");
             }
         }

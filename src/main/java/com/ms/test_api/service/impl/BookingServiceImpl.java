@@ -2,7 +2,9 @@ package com.ms.test_api.service.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +44,8 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final BookingMapper bookingMapper;
 
+    private final Clock clock;
+
     @Override
     @Transactional(readOnly = true)
     public Page<BookingResponse> searchBookings(BookingFilter filter, Pageable pageable) {
@@ -74,7 +78,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         TimeRange requested = toTimeRange(request);
-        BookingValidator.validate(request.bookingDate(), requested, field.getBranch());
+        BookingValidator.validate(request.bookingDate(), requested, field.getBranch(), LocalDateTime.now(clock));
 
         if (bookingRepository.existsOverlapping(
                 field.getId(),
