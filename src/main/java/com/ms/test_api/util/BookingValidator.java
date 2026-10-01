@@ -58,7 +58,7 @@ public final class BookingValidator {
 
     private static void validateNotInPast(LocalDate bookingDate, TimeRange requested, LocalDateTime now) {
         if (bookingDate.isEqual(now.toLocalDate())) {
-            LocalTime nowTime = LocalTime.now();
+            LocalTime nowTime = now.toLocalTime();
             if (!requested.start().isAfter(nowTime)) {
                 throw new BadRequestException("Booking time cannot be in the past.");
             }

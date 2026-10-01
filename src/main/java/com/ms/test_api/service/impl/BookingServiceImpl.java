@@ -30,6 +30,7 @@ import com.ms.test_api.repository.UserRepository;
 import com.ms.test_api.repository.specification.BookingFilter;
 import com.ms.test_api.repository.specification.BookingSpecification;
 import com.ms.test_api.service.BookingService;
+import com.ms.test_api.service.PricingService;
 import com.ms.test_api.util.BookingValidator;
 import com.ms.test_api.util.TimeRange;
 
@@ -43,6 +44,7 @@ public class BookingServiceImpl implements BookingService {
     private final FieldRepository fieldRepository;
     private final UserRepository userRepository;
     private final BookingMapper bookingMapper;
+    private final PricingService pricingService;
 
     private final Clock clock;
 
@@ -96,7 +98,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStartTime(requested.start());
         booking.setEndTime(requested.end());
         booking.setStatus(BookingStatus.PENDING);
-        booking.setTotalPrice(calculateTemporaryPrice(field, requested));
+        booking.setTotalPrice(pricingService.calculateTotalPrice(field, request.bookingDate(), requested));
 
         return bookingMapper.toResponse(bookingRepository.save(booking));
     }
@@ -131,14 +133,6 @@ public class BookingServiceImpl implements BookingService {
     private Booking findBooking(Long id) {
         return bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
-    }
-
-    /** Tạm tính theo basePrice — sẽ được PricingService thay thế ở Day 11. */
-    private BigDecimal calculateTemporaryPrice(Field field, TimeRange request) {
-        long minutes = Duration.between(request.start(), request.end()).toMinutes();
-        BigDecimal hours = BigDecimal.valueOf(minutes)
-                .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
-        return field.getBasePrice().multiply(hours).setScale(2, RoundingMode.HALF_UP);
     }
 
     private TimeRange toTimeRange(BookingRequest request) {
