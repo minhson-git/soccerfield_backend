@@ -59,7 +59,7 @@ public class BookingController {
             @AuthenticationPrincipal Jwt jwt,
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-        BookingFilter filter = new BookingFilter(null, jwt.getSubject(), null,null, null, null);
+        BookingFilter filter = new BookingFilter(null, jwt.getSubject(), null, null, null, null);
         return ApiResponse.ok("Bookings retrieved successfully", bookingService.searchBookings(filter, pageable));
     }
 
@@ -74,6 +74,20 @@ public class BookingController {
             @AuthenticationPrincipal Jwt jwt) {
         return ApiResponse.created("Booking created successfully",
                 bookingService.createBooking(request, jwt.getSubject()));
+    }
+
+    @PatchMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('ADMIN') or @branchSecurity.ownsBookedField(#id, authentication.name)")
+    public ResponseEntity<ApiResponse<BookingResponse>> confirmBooking(
+            @PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.ok("Booking confirmed", bookingService.confirmBooking(id, jwt.getSubject()));
+    }
+
+    @PatchMapping("/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN') or @branchSecurity.ownsBookedField(#id, authentication.name)")
+    public ResponseEntity<ApiResponse<BookingResponse>> rejectBooking(
+            @PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.ok("Booking rejected", bookingService.rejectBooking(id, jwt.getSubject()));
     }
 
     @PatchMapping("/{id}/cancel")

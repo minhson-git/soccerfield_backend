@@ -31,6 +31,7 @@ import com.ms.test_api.repository.specification.BookingFilter;
 import com.ms.test_api.repository.specification.BookingSpecification;
 import com.ms.test_api.service.BookingService;
 import com.ms.test_api.service.PricingService;
+import com.ms.test_api.util.BookingPolicy;
 import com.ms.test_api.util.BookingValidator;
 import com.ms.test_api.util.TimeRange;
 
@@ -105,6 +106,39 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
+    public BookingResponse confirmBooking(Long id, String ownerUsername) {
+        Booking booking = findBookingForUpdate(id);
+        requireFieldOwner(booking, ownerUsername);
+
+        switch (booking.getStatus()) {
+            case PENDING -> {
+            }
+            case CONFIRMED -> throw new ConflictException("Booking is already confirmed");
+            case EXPIRED -> throw new ConflictException(
+                    "Booking has expired and cannot be confirmed; the slot may have been taken");
+            default -> throw new ConflictException("Cannot confirm a booking with status " + booking.getStatus());
+        }
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        return bookingMapper.toResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse rejectBooking(Long id, String ownerUsername) {
+        Booking booking = findBookingForUpdate(id);
+        requireFieldOwner(booking, ownerUsername);
+
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ConflictException("Cannot reject a booking with status " + booking.getStatus());
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        return bookingMapper.toResponse(bookingRepository.save(booking));
+    }
+
+    @Override
+    @Transactional
     public BookingResponse cancelBooking(Long id, String username) {
         Booking booking = findBooking(id);
 
@@ -118,7 +152,16 @@ public class BookingServiceImpl implements BookingService {
             throw new ConflictException("Completed booking cannot be cancelled");
         }
 
-        // TODO (Week 2 - Day 12): áp dụng chính sách huỷ (hạn chót trước giờ đá)
+        LocalDateTime kickoff = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        if (!now.isBefore(kickoff)) {
+            throw new ConflictException("Booking has already started and cannot be cancelled");
+        }
+        if (now.isAfter(kickoff.minusHours(BookingPolicy.CANCEL_DEADLINE_HOURS))) {
+            throw new ConflictException("Booking cannot be cancelled within "
+                    + BookingPolicy.CANCEL_DEADLINE_HOURS + " hours of kick-off");
+        }
 
         booking.setStatus(BookingStatus.CANCELLED);
         return bookingMapper.toResponse(bookingRepository.save(booking));
@@ -133,6 +176,17 @@ public class BookingServiceImpl implements BookingService {
     private Booking findBooking(Long id) {
         return bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
+    }
+
+    private Booking findBookingForUpdate(Long id) {
+        return bookingRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + id));
+    }
+
+    private void requireFieldOwner(Booking booking, String username) {
+        if (!booking.getField().getBranch().getOwner().getUsername().equals(username)) {
+            throw new AccessDeniedException("You can only manage bookings for your own fields");
+        }
     }
 
     private TimeRange toTimeRange(BookingRequest request) {

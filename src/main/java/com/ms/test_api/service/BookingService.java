@@ -15,6 +15,10 @@ public interface BookingService {
 
     BookingResponse createBooking(BookingRequest request, String username);
 
+    BookingResponse confirmBooking(Long id, String username);
+
+    BookingResponse rejectBooking(Long id, String username);
+
     BookingResponse cancelBooking(Long id, String username);
 
     void deleteBooking(Long id);

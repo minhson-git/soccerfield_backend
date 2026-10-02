@@ -1,6 +1,7 @@
 package com.ms.test_api.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.List;
@@ -12,11 +13,17 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
 import com.ms.test_api.entity.Booking;
 import com.ms.test_api.entity.enums.BookingStatus;
+
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 
 public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpecificationExecutor<Booking> {
 
@@ -27,6 +34,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Override
     @EntityGraph(attributePaths = { "user", "user.role", "field", "field.branch" })
     Optional<Booking> findById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
+    @Query("SELECT b FROM Booking b WHERE b.id = :id")
+    Optional<Booking> findByIdForUpdate(@Param("id") Long id);
 
     /**
      * Các booking đang chiếm chỗ của một sân trong một ngày. Dùng cho availability (Day 9).
@@ -52,4 +64,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime,
             @Param("statuses") Collection<BookingStatus> statuses);
+
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE Booking b
+            SET b.status = :expired, b.updatedAt = :now
+            WHERE b.status = :pending
+            AND b.createdAt < :cutoff
+            """)
+    int expireStalePending(
+            @Param("pending") BookingStatus pending,
+            @Param("expired") BookingStatus expired,
+            @Param("cutoff") LocalDateTime cutoff,
+            @Param("now") LocalDateTime now);
 }
