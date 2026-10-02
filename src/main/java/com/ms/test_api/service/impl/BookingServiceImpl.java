@@ -140,16 +140,17 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse cancelBooking(Long id, String username) {
-        Booking booking = findBooking(id);
+        Booking booking = findBookingForUpdate(id);
 
         if (!booking.getUser().getUsername().equals(username)) {
             throw new AccessDeniedException("You can only cancel your own booking");
         }
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new ConflictException("Booking is already cancelled");
-        }
-        if (booking.getStatus() == BookingStatus.COMPLETED) {
-            throw new ConflictException("Completed booking cannot be cancelled");
+        switch (booking.getStatus()) {
+            case PENDING, CONFIRMED -> {
+            }
+            case CANCELLED -> throw new ConflictException("Booking is already cancelled");
+            default -> throw new ConflictException(
+                    "Cannot cancel a booking with status " + booking.getStatus());
         }
 
         LocalDateTime kickoff = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
@@ -184,7 +185,8 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void requireFieldOwner(Booking booking, String username) {
-        if (!booking.getField().getBranch().getOwner().getUsername().equals(username)) {
+        User owner = booking.getField().getBranch().getOwner();
+        if (owner == null || !owner.getUsername().equals(username)) {
             throw new AccessDeniedException("You can only manage bookings for your own fields");
         }
     }
