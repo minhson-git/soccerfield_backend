@@ -18,6 +18,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ms.test_api.entity.Booking;
 import com.ms.test_api.entity.enums.BookingStatus;
@@ -77,5 +78,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             @Param("pending") BookingStatus pending,
             @Param("expired") BookingStatus expired,
             @Param("cutoff") LocalDateTime cutoff,
+            @Param("now") LocalDateTime now);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional 
+    @Query("""
+            UPDATE Booking b
+            SET b.status = :completed, b.updatedAt = :now
+            WHERE b.status = :confirmed
+            AND (b.bookingDate < :today
+            OR (b.bookingDate = :today AND b.endTime <= :timeNow))
+            """)
+     int completeFinished(
+            @Param("confirmed") BookingStatus confirmed,
+            @Param("completed") BookingStatus completed,
+            @Param("today") LocalDate today,
+            @Param("timeNow") LocalTime timeNow,
             @Param("now") LocalDateTime now);
 }
