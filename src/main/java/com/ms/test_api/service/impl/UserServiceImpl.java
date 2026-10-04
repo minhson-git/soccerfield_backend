@@ -118,6 +118,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse updateUser(Long id, UserUpdateRequest request) {
+        if (id == null) {
+            throw new BadRequestException("User ID cannot be null");
+        }
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return updateProfile(user, request);
@@ -135,7 +138,9 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public UserResponse changeRole(Long id, RoleName roleName) {
-
+        if (id == null) {
+            throw new BadRequestException("User ID cannot be null");
+        }
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
@@ -159,6 +164,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long id) {
+        if (id == null) {
+            throw new BadRequestException("User ID cannot be null");
+        }
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         userRepository.delete(user);

@@ -92,6 +92,9 @@ public class BranchServiceImpl implements BranchService {
     }
 
     private Branch findBranch(Long id) {
+        if (id == null) {
+            throw new BadRequestException("Branch ID cannot be null");
+        }
         return branchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + id));
     }
