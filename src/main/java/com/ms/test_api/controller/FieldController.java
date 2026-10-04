@@ -2,6 +2,7 @@ package com.ms.test_api.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import com.ms.test_api.dto.request.FieldRequest;
 import com.ms.test_api.dto.response.ApiResponse;
 import com.ms.test_api.dto.response.FieldAvailabilityResponse;
 import com.ms.test_api.dto.response.FieldResponse;
+import com.ms.test_api.dto.response.PriceQuoteResponse;
 import com.ms.test_api.entity.enums.FieldStatus;
 import com.ms.test_api.entity.enums.FieldType;
 import com.ms.test_api.repository.specification.FieldFilter;
@@ -71,6 +73,17 @@ public class FieldController {
             @PathVariable Long id,
             @RequestBody @Valid FieldRequest request) {
         return ApiResponse.ok("Field updated successfully", fieldService.updateField(id, request));
+    }
+
+    // FieldController
+    @GetMapping("/{id}/quote")
+    public ResponseEntity<ApiResponse<PriceQuoteResponse>> quote(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime startTime,
+            @RequestParam @DateTimeFormat(pattern = "HH:mm") LocalTime endTime) {
+        return ApiResponse.ok("Price quote calculated",
+                fieldService.quote(id, date, startTime, endTime));
     }
 
     @DeleteMapping("/{id}")

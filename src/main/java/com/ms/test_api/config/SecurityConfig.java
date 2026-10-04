@@ -64,6 +64,7 @@ public class SecurityConfig {
                                 "/api/v1/fields",
                                 "/api/v1/fields/{id}",
                                 "/api/v1/fields/{id}/availability",
+                                "/api/v1/fields/{id}/quote",
                                 "/api/v1/branches",
                                 "/api/v1/branches/{id}")
                         .permitAll()
