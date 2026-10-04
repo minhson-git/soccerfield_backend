@@ -23,6 +23,11 @@ public class PriceCalculator {
         return minutePriceTotal.divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
     }
 
+    public static BigDecimal hourlyRateAt(BigDecimal basePrice, LocalTime at, DayOfWeek dayOfWeek, List<PriceBand> bands) {
+        BigDecimal multiplier = resolveMultiplier(at, dayOfWeek, bands);
+        return basePrice.multiply(multiplier).setScale(2, RoundingMode.HALF_UP);
+    }
+
     private static BigDecimal resolveMultiplier(LocalTime at, DayOfWeek dayOfWeek, List<PriceBand> bands) {
         for (PriceBand band : bands) {
             if (!band.isGeneric() && band.appliesOn(dayOfWeek) && band.covers(at))

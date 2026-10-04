@@ -1,6 +1,7 @@
 package com.ms.test_api.service.impl;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,16 +27,21 @@ public class PricingServiceImpl implements PricingService {
     @Override
     @Transactional(readOnly = true)
     public BigDecimal calculateTotalPrice(Field field, LocalDate bookingDate, TimeRange requested) {
-        List<PriceBand> bands = pricingRuleRepository
-                .findApplicable(field.getBranch().getId(), bookingDate.getDayOfWeek())
+        return PriceCalculator.calculate(
+                field.getBasePrice(), BookingPolicy.SLOT_MINUTES, requested,
+                bookingDate.getDayOfWeek(), bandsFor(field.getBranch().getId(), bookingDate.getDayOfWeek()));
+    }
+
+    @Override
+    public List<PriceBand> bandsFor(Long branchId, DayOfWeek dayOfWeek) {
+                List<PriceBand> bands = pricingRuleRepository
+                .findApplicable(branchId, dayOfWeek)
                 .stream()
                 .map(rule -> new PriceBand(rule.getDayOfWeek(),
                         new TimeRange(rule.getStartTime(), rule.getEndTime()),
                         rule.getMultiplier()))
                 .toList();
 
-        return PriceCalculator.calculate(
-                field.getBasePrice(), BookingPolicy.SLOT_MINUTES, requested,
-                bookingDate.getDayOfWeek(), bands);
+        return bands;
     }
 }
