@@ -2,6 +2,7 @@ package com.ms.test_api.config;
 
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 
 @Component
+@Order(1) // phải chạy trước DemoDataSeeder (@Order(2)), vì seeder cần các role tạo ở đây
 @Slf4j
 @RequiredArgsConstructor
 public class DataInitializer implements ApplicationRunner {

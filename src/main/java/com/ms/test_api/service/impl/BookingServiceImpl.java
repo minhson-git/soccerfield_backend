@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -182,10 +184,19 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void requireFieldOwner(Booking booking, String username) {
+        if (currentUserIsAdmin()) {
+            return;
+        }
         User owner = booking.getField().getBranch().getOwner();
         if (owner == null || !owner.getUsername().equals(username)) {
             throw new AccessDeniedException("You can only manage bookings for your own fields");
         }
+    }
+
+    private static boolean currentUserIsAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
     private TimeRange toTimeRange(BookingRequest request) {
