@@ -14,13 +14,13 @@ public class PricingRuleValidator {
     private static void validateGranularity(TimeRange window) {
         int slotSeconds = BookingPolicy.SLOT_MINUTES * 60;
         if (window.start().toSecondOfDay() % slotSeconds != 0 || window.end().toSecondOfDay() % slotSeconds != 0) {
-            throw new BadRequestException("Start and end times must be in multiples of " + BookingPolicy.SLOT_MINUTES + " minutes.");
+            throw new BadRequestException("Start and end times must be on a " + BookingPolicy.SLOT_MINUTES + "-minute mark such as 17:00 or 17:30");
         }
     }
 
     private static void validateNoOverlap(PriceBand candidate, List<PriceBand> existing) {
         if (existing.stream().anyMatch(band -> candidate.window().overlaps(band.window()))) {
-            throw new ConflictException("New price band overlaps with existing bands.");
+            throw new ConflictException("This price rule overlaps an existing rule for the same day scope");
         }
     }
 }

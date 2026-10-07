@@ -10,23 +10,25 @@ import jakarta.validation.constraints.Size;
 
 public record BranchRequest(
 
-        @NotBlank @Size(max = 100)
+        @NotBlank(message = "Branch name is required")
+        @Size(max = 100, message = "Branch name must be at most 100 characters")
         String name,
 
-        @NotBlank @Size(max = 255)
+        @NotBlank(message = "Address is required")
+        @Size(max = 255, message = "Address must be at most 255 characters")
         String address,
 
-        @Size(max = 50)
+        @Size(max = 50, message = "District must be at most 50 characters")
         String district,
 
-        @Size(max = 20)
+        @Size(max = 20, message = "Phone number must be at most 20 characters")
         String phone,
 
-        @NotNull
+        @NotNull(message = "Opening time is required and must be in HH:mm format")
         @JsonFormat(pattern = "HH:mm")
         LocalTime openingTime,
 
-        @NotNull
+        @NotNull(message = "Closing time is required and must be in HH:mm format")
         @JsonFormat(pattern = "HH:mm")
         LocalTime closingTime,
 

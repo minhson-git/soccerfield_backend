@@ -7,13 +7,14 @@ import jakarta.validation.constraints.Size;
 
 public record UserCreationRequest(
         @NotBlank(message = "Username is required")
-        @Pattern (regexp = "^[a-zA-Z][a-zA-Z0-9_]+$", message = "Username must be start with a letter and contain only letters, digits, and underscores")
+        @Pattern(regexp = "^[a-zA-Z][a-zA-Z0-9_]+$",
+                message = "Username must start with a letter and contain only letters, digits and underscores")
         @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
         String username,
 
         @NotBlank(message = "Email is required")
         @Email(message = "Email is not in correct format")
-        @Size(max = 100)
+        @Size(max = 100, message = "Email must be at most 100 characters")
         String email,
 
         @NotBlank(message = "Password is required")
@@ -21,9 +22,9 @@ public record UserCreationRequest(
         String password,
 
         @NotBlank(message = "Full name is required")
-        @Size(max = 100)
+        @Size(max = 100, message = "Full name must be at most 100 characters")
         String fullName,
 
-        @Size(max = 20)
+        @Size(max = 20, message = "Phone number must be at most 20 characters")
         String phone
 ) {}

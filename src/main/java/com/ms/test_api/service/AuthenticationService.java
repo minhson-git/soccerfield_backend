@@ -43,14 +43,14 @@ public class AuthenticationService {
     @Transactional(readOnly = true)
     public AuthenticationResponse login(SignInRequest request) {
         User user = findByIdentifier(request.identifier())
-                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
+                .orElseThrow(() -> new UnauthorizedException("Username, phone number or password is incorrect"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new UnauthorizedException("Invalid credentials");
+            throw new UnauthorizedException("Username, phone number or password is incorrect");
         }
 
         if (!Boolean.TRUE.equals(user.getEnabled())) {
-            throw new UnauthorizedException("Account is disabled");
+            throw new UnauthorizedException("Account has been disabled, please contact the administrator");
         }
 
         return issueTokens(user);
@@ -64,14 +64,14 @@ public class AuthenticationService {
 
         if (tokenBlacklistService.isBlacklisted(tokenId)) {
             log.warn("Attempt to reuse a revoked refresh token: {}", tokenId);
-            throw new UnauthorizedException("Refresh token has been revoked");
+            throw new UnauthorizedException("Refresh token has already been used or revoked, please log in again");
         }
 
         User user = userRepository.findByUsername(jwtService.extractSubject(refreshToken))
-                .orElseThrow(() -> new UnauthorizedException("Token subject no longer exists"));
+                .orElseThrow(() -> new UnauthorizedException("The account for this token no longer exists, please log in again"));
 
         if (!Boolean.TRUE.equals(user.getEnabled())) {
-            throw new UnauthorizedException("Account is disabled");
+            throw new UnauthorizedException("Account has been disabled, please contact the administrator");
         }
 
         // Rotation: refresh token cũ chỉ dùng được đúng một lần.

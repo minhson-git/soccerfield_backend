@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
         }
         String normalizedPhone = PhoneNumbers.normalizeVietnamese(phone);
         if (normalizedPhone == null) {
-            throw new BadRequestException("Invalid phone number format: " + phone);
+            throw new BadRequestException("Phone number '" + phone + "' is not a valid Vietnamese mobile number");
         }
 
         return normalizedPhone;

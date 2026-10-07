@@ -26,33 +26,38 @@ public final class BookingValidator {
 
     private static void validateDate(LocalDate bookingDate, LocalDate today) {
         if (bookingDate.isBefore(today)) {
-            throw new BadRequestException("Booking date cannot be in the past.");
+            throw new BadRequestException("Booking date cannot be in the past");
         }
         if (bookingDate.isAfter(today.plusDays(BookingPolicy.MAX_ADVANCE_DAYS))) {
-            throw new BadRequestException("Booking date cannot be too far in the future.");
+            throw new BadRequestException("Bookings can be made at most %d days in advance (latest date: %s)"
+                    .formatted(BookingPolicy.MAX_ADVANCE_DAYS, today.plusDays(BookingPolicy.MAX_ADVANCE_DAYS)));
         }
     }
 
     private static void validateGranularity(TimeRange requested) {
-        if (requested.start().toSecondOfDay() %  (BookingPolicy.SLOT_MINUTES * 60) != 0) {
-            throw new BadRequestException("Start time must be in multiples of " + BookingPolicy.SLOT_MINUTES + " minutes.");
+        if (requested.start().toSecondOfDay() % (BookingPolicy.SLOT_MINUTES * 60) != 0) {
+            throw new BadRequestException("Start time %s is invalid, it must be on a %d-minute mark such as 18:00 or 18:30"
+                    .formatted(requested.start(), BookingPolicy.SLOT_MINUTES));
         }
         if (requested.end().toSecondOfDay() % (BookingPolicy.SLOT_MINUTES * 60) != 0) {
-            throw new BadRequestException("End time must be in multiples of " + BookingPolicy.SLOT_MINUTES + " minutes.");
+            throw new BadRequestException("End time %s is invalid, it must be on a %d-minute mark such as 19:00 or 19:30"
+                    .formatted(requested.end(), BookingPolicy.SLOT_MINUTES));
         }
     }
 
     private static void validateDuration(TimeRange requested) {
         long duration = requested.durationMinutes();
         if (duration < BookingPolicy.MIN_DURATION_MINUTES || duration > BookingPolicy.MAX_DURATION_MINUTES) {
-            throw new BadRequestException("Booking duration must be between " + BookingPolicy.MIN_DURATION_MINUTES + " and " + BookingPolicy.MAX_DURATION_MINUTES + " minutes.");
+            throw new BadRequestException("Booking duration must be between %d and %d minutes, requested %d minutes"
+                    .formatted(BookingPolicy.MIN_DURATION_MINUTES, BookingPolicy.MAX_DURATION_MINUTES, duration));
         }
     }
 
     private static void validateWithinOpeningHours(TimeRange requested, Branch branch) {
         TimeRange openingHours = new TimeRange(branch.getOpeningTime(), branch.getClosingTime());
         if (!openingHours.contains(requested)) {
-            throw new BadRequestException("Booking time is outside of opening hours.");
+            throw new BadRequestException("Booking must be within the branch opening hours %s - %s"
+                    .formatted(openingHours.start(), openingHours.end()));
         }
     }
 
@@ -60,7 +65,8 @@ public final class BookingValidator {
         if (bookingDate.isEqual(now.toLocalDate())) {
             LocalTime nowTime = now.toLocalTime();
             if (!requested.start().isAfter(nowTime)) {
-                throw new BadRequestException("Booking time cannot be in the past.");
+                throw new BadRequestException("Start time %s has already passed today"
+                        .formatted(requested.start()));
             }
         }
     }

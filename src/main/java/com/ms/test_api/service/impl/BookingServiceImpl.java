@@ -76,7 +76,8 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Field not found with id: " + request.fieldId()));
 
         if (field.getStatus() != FieldStatus.ACTIVE) {
-            throw new BadRequestException("Field is not available for booking");
+            throw new BadRequestException("Field '%s' is currently %s and cannot be booked"
+                    .formatted(field.getName(), field.getStatus()));
         }
 
         TimeRange requested = toTimeRange(request);
@@ -88,7 +89,9 @@ public class BookingServiceImpl implements BookingService {
                 requested.start(),
                 requested.end(),
                 BookingStatus.OCCUPYING)) {
-            throw new ConflictException("This time slot has already been booked");
+            throw new ConflictException(
+                    "The time slot %s - %s on %s overlaps an existing booking on this field, please choose another time"
+                            .formatted(requested.start(), requested.end(), request.bookingDate()));
         }
 
         Booking booking = new Booking();
@@ -115,7 +118,8 @@ public class BookingServiceImpl implements BookingService {
             case CONFIRMED -> throw new ConflictException("Booking is already confirmed");
             case EXPIRED -> throw new ConflictException(
                     "Booking has expired and cannot be confirmed; the slot may have been taken");
-            default -> throw new ConflictException("Cannot confirm a booking with status " + booking.getStatus());
+            default -> throw new ConflictException(
+                    "Only PENDING bookings can be confirmed, this booking is " + booking.getStatus());
         }
 
         booking.setStatus(BookingStatus.CONFIRMED);
@@ -129,7 +133,8 @@ public class BookingServiceImpl implements BookingService {
         requireFieldOwner(booking, ownerUsername);
 
         if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new ConflictException("Cannot reject a booking with status " + booking.getStatus());
+            throw new ConflictException(
+                    "Only PENDING or CONFIRMED bookings can be rejected, this booking is " + booking.getStatus());
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
@@ -149,7 +154,7 @@ public class BookingServiceImpl implements BookingService {
             }
             case CANCELLED -> throw new ConflictException("Booking is already cancelled");
             default -> throw new ConflictException(
-                    "Cannot cancel a booking with status " + booking.getStatus());
+                    "Only PENDING or CONFIRMED bookings can be cancelled, this booking is " + booking.getStatus());
         }
 
         LocalDateTime kickoff = LocalDateTime.of(booking.getBookingDate(), booking.getStartTime());
@@ -158,9 +163,12 @@ public class BookingServiceImpl implements BookingService {
         if (!now.isBefore(kickoff)) {
             throw new ConflictException("Booking has already started and cannot be cancelled");
         }
-        if (now.isAfter(kickoff.minusHours(BookingPolicy.CANCEL_DEADLINE_HOURS))) {
-            throw new ConflictException("Booking cannot be cancelled within "
-                    + BookingPolicy.CANCEL_DEADLINE_HOURS + " hours of kick-off");
+        LocalDateTime deadline = kickoff.minusHours(BookingPolicy.CANCEL_DEADLINE_HOURS);
+        if (now.isAfter(deadline)) {
+            throw new ConflictException(
+                    "Bookings must be cancelled at least %d hours before kick-off, the deadline was %s %s"
+                            .formatted(BookingPolicy.CANCEL_DEADLINE_HOURS,
+                                    deadline.toLocalDate(), deadline.toLocalTime()));
         }
 
         booking.setStatus(BookingStatus.CANCELLED);

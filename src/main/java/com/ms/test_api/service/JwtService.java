@@ -65,11 +65,11 @@ public class JwtService {
 
             Date expiration = claims.getExpirationTime();
             if (expiration == null || expiration.before(new Date())) {
-                throw new UnauthorizedException("Token is expired");
+                throw new UnauthorizedException("Token has expired, please log in again");
             }
 
             if (!expectedType.equals(claims.getStringClaim(CLAIM_TOKEN_TYPE))) {
-                throw new UnauthorizedException("Wrong token type");
+                throw new UnauthorizedException("Expected a " + expectedType + " token but received a different token type");
             }
 
             if (claims.getJWTID() == null) {

@@ -10,18 +10,18 @@ import jakarta.validation.constraints.NotNull;
 
 public record BookingRequest(
 
-        @NotNull
+        @NotNull(message = "Field ID is required")
         Long fieldId,
 
-        @NotNull
+        @NotNull(message = "Booking date is required")
         @FutureOrPresent(message = "Booking date cannot be in the past")
         LocalDate bookingDate,
 
-        @NotNull
+        @NotNull(message = "Start time is required and must be in HH:mm format")
         @JsonFormat(pattern = "HH:mm")
         LocalTime startTime,
 
-        @NotNull
+        @NotNull(message = "End time is required and must be in HH:mm format")
         @JsonFormat(pattern = "HH:mm")
         LocalTime endTime
 ) {}

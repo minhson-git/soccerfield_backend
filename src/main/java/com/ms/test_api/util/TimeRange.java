@@ -10,7 +10,7 @@ public record TimeRange(LocalTime start, LocalTime end) {
             throw new IllegalArgumentException("Start and end time cannot be null");
         }
         if (end.isBefore(start) || end.equals(start)) {
-            throw new IllegalArgumentException("End time cannot be before start time");
+            throw new IllegalArgumentException("End time must be after start time");
         }
     }
 
